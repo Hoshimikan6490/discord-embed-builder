@@ -429,7 +429,7 @@ function EmbedPreview({ embedData }) {
 				}
 
 				codeBlocks.push(
-					`<pre style="background-color: #2f3136; padding: 8px; border-radius: 4px; margin: 8px 0; overflow-x: auto;"><code class="hljs" style="background: transparent; padding: 0;">${highlightedCode}</code></pre>`,
+					`<pre style="background-color: #3f4146; padding: 8px; border-radius: 4px; margin: 8px 0; overflow-x: auto;"><code class="hljs" style="background: transparent; padding: 0;">${highlightedCode}</code></pre>`,
 				);
 				return placeholder;
 			},
@@ -528,13 +528,15 @@ function EmbedPreview({ embedData }) {
 		// Convert newlines to <br> last
 		parsed = parsed.replace(/\n/g, '<br>');
 
-		// Remove unnecessary <br> tags around list elements
+		// Remove unnecessary <br> tags around list elements and code blocks
 		parsed = parsed
 			.replace(/<br><ul/g, '<ul')
 			.replace(/<\/ul><br>/g, '</ul>')
 			.replace(/<br><\/ul>/g, '</ul>')
 			.replace(/<br><li/g, '<li')
-			.replace(/<\/li><br>/g, '</li>');
+			.replace(/<\/li><br>/g, '</li>')
+			.replace(/<br><pre/g, '<pre')
+			.replace(/<\/pre><br>/g, '</pre>');
 
 		return parsed;
 	};
@@ -801,7 +803,7 @@ function App() {
 	const [embedData, setEmbedData] = useState({
 		content: 'Check out this awesome embed!',
 		title: 'Sample Embed',
-		description: 'This is a **sample** Discord embed with *markdown* support!',
+		description: `This is an example description. Markdown works too!\n\nhttps://hoshimikan6490.com\n> Block Quotes\n\`\`\`\nCode Blocks\n\`\`\`\n*Emphasis* or _emphasis_\n\`Inline code\` or \`\`inline code\`\`\n[Links](https://example.com)\n<@123>, <@!123>, <#123>, <@&123>, @here, @everyone mentions\n||Spoilers||\n~~Strikethrough~~\n**Strong**\n__Underline__\n- list1\n  - option1\n  - option2\n- list2\n# Title size\n## subtitle size\n### topic size`,
 		color: 5814783,
 		fields: [
 			{ name: 'Field 1', value: 'Value 1', inline: true },
