@@ -1,0 +1,23 @@
+{
+  "name": "discord-embed-builder",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/Hoshimikan6490/discord-embed-builder#readme",
+  "bugs": {
+    "url": "https://github.com/Hoshimikan6490/discord-embed-builder/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hoshimikan6490/discord-embed-builder.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
