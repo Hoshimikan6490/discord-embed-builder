@@ -473,19 +473,47 @@ function EmbedPreview({ embedData }) {
 			parsed = parsed.replace(`§§§CODEBLOCK${index}§§§`, block);
 		});
 
-		// Process lists (must be done before newline conversion)
+		// Process lists and quotes (must be done before newline conversion)
 		const lines = parsed.split('\n');
 		const processedLines = [];
 		let listDepth = -1;
+		let inQuote = false;
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
-			const match = line.match(/^(\s*)- (.+)$/);
 
-			if (match) {
-				const spaces = match[1].length;
+			// Check for quote first
+			const quoteMatch = line.match(/^>\s?(.*)$/);
+			if (quoteMatch) {
+				// Close any open lists
+				if (listDepth >= 0) {
+					for (let d = listDepth; d >= 0; d--) {
+						processedLines.push('</ul>');
+					}
+					listDepth = -1;
+				}
+
+				if (!inQuote) {
+					processedLines.push(
+						'<div style="border-left: 4px solid #4e5058; padding-left: 12px; margin: 4px 0;">',
+					);
+					inQuote = true;
+				}
+				processedLines.push(quoteMatch[1]);
+				continue;
+			} else if (inQuote) {
+				// End quote block
+				processedLines.push('</div>');
+				inQuote = false;
+			}
+
+			// Check for list
+			const listMatch = line.match(/^(\s*)- (.+)$/);
+
+			if (listMatch) {
+				const spaces = listMatch[1].length;
 				const indent = Math.floor(spaces / 2);
-				const content = match[2];
+				const content = listMatch[2];
 
 				if (indent > listDepth) {
 					// Open new list(s)
@@ -516,11 +544,14 @@ function EmbedPreview({ embedData }) {
 			}
 		}
 
-		// Close any remaining open lists
+		// Close any remaining open lists or quotes
 		if (listDepth >= 0) {
 			for (let d = listDepth; d >= 0; d--) {
 				processedLines.push('</ul>');
 			}
+		}
+		if (inQuote) {
+			processedLines.push('</div>');
 		}
 
 		parsed = processedLines.join('\n');
@@ -528,7 +559,7 @@ function EmbedPreview({ embedData }) {
 		// Convert newlines to <br> last
 		parsed = parsed.replace(/\n/g, '<br>');
 
-		// Remove unnecessary <br> tags around list elements and code blocks
+		// Remove unnecessary <br> tags around list elements, code blocks, and quotes
 		parsed = parsed
 			.replace(/<br><ul/g, '<ul')
 			.replace(/<\/ul><br>/g, '</ul>')
@@ -536,7 +567,16 @@ function EmbedPreview({ embedData }) {
 			.replace(/<br><li/g, '<li')
 			.replace(/<\/li><br>/g, '</li>')
 			.replace(/<br><pre/g, '<pre')
-			.replace(/<\/pre><br>/g, '</pre>');
+			.replace(/<\/pre><br>/g, '</pre>')
+			.replace(
+				/<br><div style="border-left: 4px/g,
+				'<div style="border-left: 4px',
+			)
+			.replace(
+				/<div style="border-left: 4px solid #4e5058; padding-left: 12px; margin: 4px 0;"><br>/g,
+				'<div style="border-left: 4px solid #4e5058; padding-left: 12px; margin: 4px 0;">',
+			)
+			.replace(/<\/div><br>/g, '</div>');
 
 		return parsed;
 	};
