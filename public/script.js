@@ -448,8 +448,12 @@ function EmbedPreview({ embedData }) {
 				'<span class="spoiler" style="background-color: #202225; color: #202225; padding: 0 2px; border-radius: 3px; cursor: pointer;" onclick="this.style.color=\'#dcddde\'; this.style.backgroundColor=\'rgb(54, 57, 63)\';">$1</span>',
 			)
 			.replace(
+				/<@!?(\d+)>/g,
+				'<span style="background-color: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500; cursor: pointer;">@User</span>',
+			)
+			.replace(
 				/ (@here|@everyone)/g,
-				' <span style="background-color: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500;">$1</span>',
+				' <span style="background-color: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500; cursor: pointer;">$1</span>',
 			)
 			.replace(
 				/``(.+?)``/g,
