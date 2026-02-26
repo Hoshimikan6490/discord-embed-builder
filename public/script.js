@@ -82,6 +82,38 @@ function ComponentV1({ embedData, setEmbedData }) {
 		}));
 	};
 
+	const addButton = () => {
+		setEmbedData((prev) => {
+			if ((prev.buttons || []).length >= 25) {
+				alert('Maximum 25 buttons allowed (5 rows × 5 buttons per row)');
+				return prev;
+			}
+			return {
+				...prev,
+				buttons: [
+					...(prev.buttons || []),
+					{ label: '', style: 1, url: '', disabled: false },
+				],
+			};
+		});
+	};
+
+	const updateButton = (index, field, value) => {
+		setEmbedData((prev) => ({
+			...prev,
+			buttons: prev.buttons.map((b, i) =>
+				i === index ? { ...b, [field]: value } : b,
+			),
+		}));
+	};
+
+	const removeButton = (index) => {
+		setEmbedData((prev) => ({
+			...prev,
+			buttons: prev.buttons.filter((_, i) => i !== index),
+		}));
+	};
+
 	return (
 		<div className="pa3">
 			<div className="mb3">
@@ -320,6 +352,87 @@ function ComponentV1({ embedData, setEmbedData }) {
 							<button
 								className="button-reset bg-red white pa2 br2 pointer bn"
 								onClick={() => removeField(index)}
+							>
+								Remove
+							</button>
+						</div>
+					</div>
+				))}
+			</div>
+
+			{/* Buttons Section */}
+			<div className="mb3">
+				<div className="flex items-center justify-between mb2">
+					<label className="db fw6 white">Buttons</label>
+					<button
+						className={`button-reset pa2 br2 bn ${(embedData.buttons || []).length >= 25 ? 'bg-gray white o-50' : 'bg-blue white pointer'}`}
+						onClick={addButton}
+						disabled={(embedData.buttons || []).length >= 25}
+					>
+						+ Add Button
+					</button>
+				</div>
+				{(embedData.buttons || []).length >= 25 && (
+					<div className="pa2 mb2 br2 bg-red white">
+						これ以上ボタンは追加できません。不要なボタンを削除するか、別メッセージでの送信を検討してください。
+					</div>
+				)}
+				{embedData.buttons?.map((button, index) => (
+					<div key={index} className="ba b--black-20 pa2 mb2 br2">
+						<div className="mb2">
+							<label className="db fw6 mb1 white">Label</label>
+							<input
+								type="text"
+								className="input-reset ba b--black-20 pa2 w-100 br2"
+								value={button.label}
+								onChange={(e) => updateButton(index, 'label', e.target.value)}
+								placeholder="Button Label"
+								maxLength="80"
+							/>
+						</div>
+						<div className="mb2">
+							<label className="db fw6 mb1 white">Style</label>
+							<select
+								className="input-reset ba b--black-20 pa2 w-100 br2"
+								value={button.style}
+								onChange={(e) =>
+									updateButton(index, 'style', parseInt(e.target.value))
+								}
+							>
+								<option value="1">Primary (Blue)</option>
+								<option value="2">Secondary (Gray)</option>
+								<option value="3">Success (Green)</option>
+								<option value="4">Danger (Red)</option>
+								<option value="5">Link</option>
+							</select>
+						</div>
+						{button.style === 5 && (
+							<div className="mb2">
+								<label className="db fw6 mb1 white">URL</label>
+								<input
+									type="url"
+									className="input-reset ba b--black-20 pa2 w-100 br2"
+									value={button.url}
+									onChange={(e) => updateButton(index, 'url', e.target.value)}
+									placeholder="https://example.com"
+								/>
+							</div>
+						)}
+						<div className="flex items-center justify-between">
+							<label className="flex items-center white">
+								<input
+									type="checkbox"
+									className="mr2"
+									checked={button.disabled}
+									onChange={(e) =>
+										updateButton(index, 'disabled', e.target.checked)
+									}
+								/>
+								Disabled
+							</label>
+							<button
+								className="button-reset bg-red white pa2 br2 pointer bn"
+								onClick={() => removeButton(index)}
 							>
 								Remove
 							</button>
@@ -900,6 +1013,126 @@ function EmbedPreview({ embedData }) {
 							</div>
 						)}
 					</div>
+
+					{/* Buttons */}
+					{embedData.buttons && embedData.buttons.length > 0 && (
+						<div style={{ marginTop: '8px' }}>
+							{(() => {
+								const rows = [];
+								for (let i = 0; i < embedData.buttons.length; i += 5) {
+									rows.push(embedData.buttons.slice(i, i + 5));
+								}
+								return rows.map((row, rowIndex) => (
+									<div
+										key={rowIndex}
+										style={{
+											display: 'flex',
+											gap: '8px',
+											marginBottom: rowIndex < rows.length - 1 ? '8px' : '0',
+										}}
+									>
+										{row.map((button, buttonIndex) => {
+											const index = rowIndex * 5 + buttonIndex;
+											const getButtonStyle = (style, disabled) => {
+												const baseStyle = {
+													padding: '2px 16px',
+													minHeight: '32px',
+													borderRadius: '3px',
+													fontWeight: 500,
+													fontSize: '14px',
+													border: 'none',
+													cursor: disabled ? 'not-allowed' : 'pointer',
+													opacity: disabled ? 0.5 : 1,
+													textDecoration: 'none',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+												};
+
+												switch (style) {
+													case 1: // Primary
+														return {
+															...baseStyle,
+															backgroundColor: '#5865f2',
+															color: '#ffffff',
+														};
+													case 2: // Secondary
+														return {
+															...baseStyle,
+															backgroundColor: '#4e5058',
+															color: '#ffffff',
+														};
+													case 3: // Success
+														return {
+															...baseStyle,
+															backgroundColor: '#248046',
+															color: '#ffffff',
+														};
+													case 4: // Danger
+														return {
+															...baseStyle,
+															backgroundColor: '#da373c',
+															color: '#ffffff',
+														};
+													case 5: // Link
+														return {
+															...baseStyle,
+															backgroundColor: '#4e5058',
+															color: '#ffffff',
+														};
+													default:
+														return baseStyle;
+												}
+											};
+
+											const ExternalLinkIcon = () => (
+												<svg
+													width="16"
+													height="16"
+													viewBox="0 0 16 16"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="2"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													style={{ marginInlineStart: '8px' }}
+												>
+													<path d="M11 2H14V5M14 2L9 7" />
+													<path d="M14 9V13C14 13.5 13.5 14 13 14H3C2.5 14 2 13.5 2 13V3C2 2.5 2.5 2 3 2H7" />
+												</svg>
+											);
+
+											const buttonStyle = getButtonStyle(
+												button.style,
+												button.disabled,
+											);
+
+											return button.style === 5 && button.url ? (
+												<a
+													key={index}
+													href={button.url}
+													target="_blank"
+													rel="noopener noreferrer"
+													style={buttonStyle}
+												>
+													{button.label || 'Link'}
+													<ExternalLinkIcon />
+												</a>
+											) : (
+												<button
+													key={index}
+													style={buttonStyle}
+													disabled={button.disabled}
+												>
+													{button.label || 'Button'}
+												</button>
+											);
+										})}
+									</div>
+								));
+							})()}
+						</div>
+					)}
 				</div>
 			</div>
 		</div>
@@ -920,6 +1153,15 @@ function App() {
 		],
 		footer: { text: 'Footer text' },
 		timestamp: new Date().toISOString(),
+		buttons: [
+			{ label: 'Primary', style: 1, disabled: false },
+			{
+				label: 'Visit Website',
+				style: 5,
+				url: 'https://example.com',
+				disabled: false,
+			},
+		],
 	});
 	const [jsonText, setJsonText] = useState('');
 	const [jsonError, setJsonError] = useState('');
