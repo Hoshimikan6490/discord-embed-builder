@@ -60,10 +60,21 @@ function ComponentV1({ embedData, setEmbedData }) {
 	};
 
 	const addField = () => {
-		setEmbedData((prev) => ({
-			...prev,
-			fields: [...(prev.fields || []), { name: '', value: '', inline: false }],
-		}));
+		setEmbedData((prev) => {
+			if ((prev.fields || []).length >= 25) {
+				alert(
+					'フィールドは最大25個までです。不要なフィールドを削除するか、別メッセージでの送信を検討してください。',
+				);
+				return prev;
+			}
+			return {
+				...prev,
+				fields: [
+					...(prev.fields || []),
+					{ name: '', value: '', inline: false },
+				],
+			};
+		});
 	};
 
 	const updateField = (index, field, value) => {
@@ -85,7 +96,9 @@ function ComponentV1({ embedData, setEmbedData }) {
 	const addButton = () => {
 		setEmbedData((prev) => {
 			if ((prev.buttons || []).length >= 25) {
-				alert('Maximum 25 buttons allowed (5 rows × 5 buttons per row)');
+				alert(
+					'ボタンは最大25個までです。不要なボタンを削除するか、別メッセージでの送信を検討してください。',
+				);
 				return prev;
 			}
 			return {
@@ -114,15 +127,49 @@ function ComponentV1({ embedData, setEmbedData }) {
 		}));
 	};
 
+	// Calculate total character count
+	const calculateTotalCharacters = () => {
+		let total = 0;
+		if (embedData.title) total += embedData.title.length;
+		if (embedData.description) total += embedData.description.length;
+		if (embedData.author?.name) total += embedData.author.name.length;
+		if (embedData.footer?.text) total += embedData.footer.text.length;
+		if (embedData.fields) {
+			embedData.fields.forEach((field) => {
+				if (field.name) total += field.name.length;
+				if (field.value) total += field.value.length;
+			});
+		}
+		return total;
+	};
+
+	const totalChars = calculateTotalCharacters();
+	const isOverLimit = totalChars > 6000;
+
 	return (
 		<div className="pa3">
+			{/* Character Count Warning */}
+			<div
+				className={`mb3 pa2 br2 ${isOverLimit ? 'bg-red white' : 'bg-black-10 white-70'}`}
+			>
+				<div className="fw6 mb1">
+					埋め込み内の合計文字数：{totalChars} / 6000
+				</div>
+				{isOverLimit && (
+					<div>
+						⚠️
+						文字数制限を超えています！タイトル、説明、author名、footer、またはフィールドの内容を減らしてください。
+					</div>
+				)}
+			</div>
+
 			<div className="mb3">
 				<label className="db fw6 mb2 white">Content</label>
 				<textarea
 					className="input-reset ba b--black-20 pa2 w-100 br2"
 					value={embedData.content || ''}
 					onChange={(e) => handleChange('content', e.target.value)}
-					placeholder="Message content (text before embed)"
+					placeholder="メッセージ本文（Embedの前のテキスト）"
 					rows="3"
 					maxLength="2000"
 				/>
@@ -135,7 +182,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 					className="input-reset ba b--black-20 pa2 w-100 br2"
 					value={embedData.title || ''}
 					onChange={(e) => handleChange('title', e.target.value)}
-					placeholder="Embed Title"
+					placeholder="埋め込みのタイトル"
 					maxLength="256"
 				/>
 			</div>
@@ -146,7 +193,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 					className="input-reset ba b--black-20 pa2 w-100 br2"
 					value={embedData.description || ''}
 					onChange={(e) => handleChange('description', e.target.value)}
-					placeholder="Embed Description"
+					placeholder="埋め込みの説明"
 					rows="4"
 					maxLength="4096"
 				/>
@@ -226,7 +273,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 						onChange={(e) =>
 							handleNestedChange('author', 'name', e.target.value)
 						}
-						placeholder="Author Name"
+						placeholder="Author名"
 						maxLength="256"
 					/>
 				</div>
@@ -238,7 +285,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 						onChange={(e) =>
 							handleNestedChange('author', 'url', e.target.value)
 						}
-						placeholder="Author URL"
+						placeholder="Author Icon URL"
 					/>
 				</div>
 				<div>
@@ -255,7 +302,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 			</div>
 
 			<div className="mb3">
-				<h3 className="fw6 mb2 white">Footer</h3>
+				<h3 className="fw6 mb2 white">footer</h3>
 				<div className="mb2">
 					<input
 						type="text"
@@ -264,7 +311,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 						onChange={(e) =>
 							handleNestedChange('footer', 'text', e.target.value)
 						}
-						placeholder="Footer Text"
+						placeholder="footerの内容"
 						maxLength="2048"
 					/>
 				</div>
@@ -288,7 +335,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 					className="input-reset ba b--black-20 pa2 w-100 br2"
 					value={embedData.image?.url || ''}
 					onChange={(e) => handleNestedChange('image', 'url', e.target.value)}
-					placeholder="Image URL"
+					placeholder="画像URL"
 				/>
 			</div>
 
@@ -301,7 +348,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 					onChange={(e) =>
 						handleNestedChange('thumbnail', 'url', e.target.value)
 					}
-					placeholder="Thumbnail URL"
+					placeholder="サムネイルURL"
 				/>
 			</div>
 
@@ -309,12 +356,18 @@ function ComponentV1({ embedData, setEmbedData }) {
 				<div className="flex items-center justify-between mb2">
 					<h3 className="fw6 white">Fields</h3>
 					<button
-						className="button-reset bg-blue white pa2 br2 pointer bn"
+						className={`button-reset pa2 br2 bn ${(embedData.fields || []).length >= 25 ? 'bg-gray white o-50' : 'bg-blue white pointer'}`}
 						onClick={addField}
+						disabled={(embedData.fields || []).length >= 25}
 					>
-						+ Add Field
+						+ フィールド追加
 					</button>
 				</div>
+				{(embedData.fields || []).length >= 25 && (
+					<div className="pa2 mb2 br2 bg-red white">
+						フィールド数が上限（25個）に達しました。これ以上追加したい場合は、不要なフィールドを削除するか、別メッセージでの送信を検討してください。
+					</div>
+				)}
 				{embedData.fields?.map((field, index) => (
 					<div key={index} className="ba b--black-20 pa2 mb2 br2">
 						<div className="mb2">
@@ -323,7 +376,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 								className="input-reset ba b--black-20 pa2 w-100 br2"
 								value={field.name}
 								onChange={(e) => updateField(index, 'name', e.target.value)}
-								placeholder="Field Name"
+								placeholder="フィールド名"
 								maxLength="256"
 							/>
 						</div>
@@ -332,7 +385,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 								className="input-reset ba b--black-20 pa2 w-100 br2"
 								value={field.value}
 								onChange={(e) => updateField(index, 'value', e.target.value)}
-								placeholder="Field Value"
+								placeholder="フィールドの内容"
 								rows="2"
 								maxLength="1024"
 							/>
@@ -353,7 +406,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 								className="button-reset bg-red white pa2 br2 pointer bn"
 								onClick={() => removeField(index)}
 							>
-								Remove
+								削除
 							</button>
 						</div>
 					</div>
@@ -369,7 +422,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 						onClick={addButton}
 						disabled={(embedData.buttons || []).length >= 25}
 					>
-						+ Add Button
+						+ ボタン追加
 					</button>
 				</div>
 				{(embedData.buttons || []).length >= 25 && (
@@ -386,12 +439,12 @@ function ComponentV1({ embedData, setEmbedData }) {
 								className="input-reset ba b--black-20 pa2 w-100 br2"
 								value={button.label}
 								onChange={(e) => updateButton(index, 'label', e.target.value)}
-								placeholder="Button Label"
+								placeholder="ボタンのラベル"
 								maxLength="80"
 							/>
 						</div>
 						<div className="mb2">
-							<label className="db fw6 mb1 white">Style</label>
+							<label className="db fw6 mb1 white">ボタンのスタイル</label>
 							<select
 								className="input-reset ba b--black-20 pa2 w-100 br2"
 								value={button.style}
@@ -399,10 +452,10 @@ function ComponentV1({ embedData, setEmbedData }) {
 									updateButton(index, 'style', parseInt(e.target.value))
 								}
 							>
-								<option value="1">Primary (Blue)</option>
-								<option value="2">Secondary (Gray)</option>
-								<option value="3">Success (Green)</option>
-								<option value="4">Danger (Red)</option>
+								<option value="1">Primary（青）</option>
+								<option value="2">Secondary（グレー）</option>
+								<option value="3">Success（緑）</option>
+								<option value="4">Danger（赤）</option>
 								<option value="5">Link</option>
 							</select>
 						</div>
@@ -434,7 +487,7 @@ function ComponentV1({ embedData, setEmbedData }) {
 								className="button-reset bg-red white pa2 br2 pointer bn"
 								onClick={() => removeButton(index)}
 							>
-								Remove
+								削除
 							</button>
 						</div>
 					</div>
@@ -499,7 +552,7 @@ function ComponentV2({ embedData, setEmbedData }) {
 				></div>
 				{jsonError && (
 					<div className="bg-light-red pa2 mt2 br2 dark-red">
-						Error: {jsonError}
+						エラー：{jsonError}
 					</div>
 				)}
 			</div>
@@ -1185,7 +1238,7 @@ function App() {
 
 	const copyJSON = () => {
 		navigator.clipboard.writeText(JSON.stringify(embedData, null, 2));
-		alert('JSON copied to clipboard!');
+		alert('JSONをクリップボードにコピーしました！');
 	};
 
 	const exportJSON = () => {
@@ -1255,13 +1308,13 @@ function App() {
 							className="button-reset bg-blue white pa2 br2 pointer bn mr2"
 							onClick={copyJSON}
 						>
-							📋 Copy JSON
+							📋 JSONをコピー
 						</button>
 						<button
 							className="button-reset bg-green white pa2 br2 pointer bn"
 							onClick={exportJSON}
 						>
-							💾 Export JSON
+							💾 JSONをエクスポート出力
 						</button>
 					</div>
 					{activeTab === 'v1' && (
@@ -1284,7 +1337,7 @@ function App() {
 									className="bg-light-red pa2 mt2 br2 dark-red"
 									style={{ fontSize: '12px' }}
 								>
-									Error: {jsonError}
+									エラー：{jsonError}
 								</div>
 							)}
 						</div>
