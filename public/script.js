@@ -477,7 +477,7 @@ function EmbedPreview({ embedData }) {
 			parsed = parsed.replace(`§§§CODEBLOCK${index}§§§`, block);
 		});
 
-		// Process lists and quotes (must be done before newline conversion)
+		// Process lists, quotes, headings, and subtext (must be done before newline conversion)
 		const lines = parsed.split('\n');
 		const processedLines = [];
 		let listDepth = -1;
@@ -509,6 +509,65 @@ function EmbedPreview({ embedData }) {
 				// End quote block
 				processedLines.push('</div>');
 				inQuote = false;
+			}
+
+			// Check for headings
+			const h3Match = line.match(/^### (.+)$/);
+			const h2Match = line.match(/^## (.+)$/);
+			const h1Match = line.match(/^# (.+)$/);
+
+			if (h3Match) {
+				// Close any open lists
+				if (listDepth >= 0) {
+					for (let d = listDepth; d >= 0; d--) {
+						processedLines.push('</ul>');
+					}
+					listDepth = -1;
+				}
+				processedLines.push(
+					`<h3 style="font-size: 16px; font-weight: 600; margin: 8px 0 4px 0;">${h3Match[1]}</h3>`,
+				);
+				continue;
+			} else if (h2Match) {
+				// Close any open lists
+				if (listDepth >= 0) {
+					for (let d = listDepth; d >= 0; d--) {
+						processedLines.push('</ul>');
+					}
+					listDepth = -1;
+				}
+				processedLines.push(
+					`<h2 style="font-size: 20px; font-weight: 600; margin: 8px 0 4px 0;">${h2Match[1]}</h2>`,
+				);
+				continue;
+			} else if (h1Match) {
+				// Close any open lists
+				if (listDepth >= 0) {
+					for (let d = listDepth; d >= 0; d--) {
+						processedLines.push('</ul>');
+					}
+					listDepth = -1;
+				}
+				processedLines.push(
+					`<h1 style="font-size: 24px; font-weight: 600; margin: 8px 0 4px 0;">${h1Match[1]}</h1>`,
+				);
+				continue;
+			}
+
+			// Check for subtext
+			const subtextMatch = line.match(/^-# (.+)$/);
+			if (subtextMatch) {
+				// Close any open lists
+				if (listDepth >= 0) {
+					for (let d = listDepth; d >= 0; d--) {
+						processedLines.push('</ul>');
+					}
+					listDepth = -1;
+				}
+				processedLines.push(
+					`<div style="font-size: 12px; color: #b9bbbe; margin: 4px 0;">${subtextMatch[1]}</div>`,
+				);
+				continue;
 			}
 
 			// Check for list
@@ -580,7 +639,13 @@ function EmbedPreview({ embedData }) {
 				/<div style="border-left: 4px solid #4e5058; padding-left: 12px; margin: 4px 0;"><br>/g,
 				'<div style="border-left: 4px solid #4e5058; padding-left: 12px; margin: 4px 0;">',
 			)
-			.replace(/<\/div><br>/g, '</div>');
+			.replace(/<\/div><br>/g, '</div>')
+			.replace(/<br><h([123])/g, '<h$1')
+			.replace(/<\/h([123])><br>/g, '</h$1>')
+			.replace(
+				/<br><div style="font-size: 12px/g,
+				'<div style="font-size: 12px',
+			);
 
 		return parsed;
 	};
@@ -847,7 +912,7 @@ function App() {
 	const [embedData, setEmbedData] = useState({
 		content: 'Check out this awesome embed!',
 		title: 'Sample Embed',
-		description: `This is an example description. Markdown works too!\n\nhttps://hoshimikan6490.com\n> Block Quotes\n\`\`\`\nCode Blocks\n\`\`\`\n*Emphasis* or _emphasis_\n\`Inline code\` or \`\`inline code\`\`\n[Links](https://example.com)\n<@123>, <@!123>, <#123>, <@&123>, @here, @everyone mentions\n||Spoilers||\n~~Strikethrough~~\n**Strong**\n__Underline__\n- list1\n  - option1\n  - option2\n- list2\n# Title size\n## subtitle size\n### topic size`,
+		description: `This is an example description. Markdown works too!\n\nhttps://hoshimikan6490.com\n> Block Quotes\n\`\`\`\nCode Blocks\n\`\`\`\n*Emphasis* or _emphasis_\n\`Inline code\` or \`\`inline code\`\`\n[Links](https://example.com)\n<@123>, <@!123>, <#123>, <@&123>, @here, @everyone mentions\n||Spoilers||\n~~Strikethrough~~\n**Strong**\n__Underline__\n- list1\n  - option1\n  - option2\n- list2\n# Title size\n## subtitle size\n### topic size\n-# subtext size`,
 		color: 5814783,
 		fields: [
 			{ name: 'Field 1', value: 'Value 1', inline: true },
