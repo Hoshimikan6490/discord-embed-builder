@@ -618,6 +618,14 @@ function EmbedPreview({ embedData }) {
 				'<span style="background-color: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500; cursor: pointer;">@User</span>',
 			)
 			.replace(
+				/<#(\d+)>/g,
+				'<span style="background-color: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500; cursor: pointer;">#channel</span>',
+			)
+			.replace(
+				/<@&(\d+)>/g,
+				'<span style="background-color: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500; cursor: pointer;">@role</span>',
+			)
+			.replace(
 				/ (@here|@everyone)/g,
 				' <span style="background-color: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500; cursor: pointer;">$1</span>',
 			)
