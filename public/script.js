@@ -1322,7 +1322,7 @@ function App() {
 							className="button-reset bg-green white pa2 br2 pointer bn"
 							onClick={exportJSON}
 						>
-							💾 JSONをエクスポート出力
+							💾 JSONファイルをエクスポート
 						</button>
 					</div>
 					{activeTab === 'v1' && (
