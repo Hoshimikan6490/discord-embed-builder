@@ -497,61 +497,428 @@ function ComponentV1({ embedData, setEmbedData }) {
 	);
 }
 
-// Component v2 - JSON editor with CodeMirror
-function ComponentV2({ embedData, setEmbedData }) {
-	const editorRef = useRef(null);
-	const codeMirrorRef = useRef(null);
+// Component v2 - Advanced Builder with Components (IS_COMPONENTS_V2=true)
+function ComponentV2({ v2Data, setV2Data }) {
+	const [jsonText, setJsonText] = useState('');
 	const [jsonError, setJsonError] = useState('');
 
+	// Update jsonText when v2Data changes
 	useEffect(() => {
-		if (editorRef.current && !codeMirrorRef.current) {
-			codeMirrorRef.current = CodeMirror(editorRef.current, {
-				value: JSON.stringify(embedData, null, 2),
-				mode: 'javascript',
-				theme: 'monokai',
-				lineNumbers: true,
-				tabSize: 2,
-				lineWrapping: true,
-			});
+		setJsonText(JSON.stringify(v2Data, null, 2));
+	}, [v2Data]);
 
-			codeMirrorRef.current.on('change', (instance) => {
-				try {
-					const value = instance.getValue();
-					const parsed = JSON.parse(value);
-					setEmbedData(parsed);
-					setJsonError('');
-				} catch (e) {
-					setJsonError(e.message);
-				}
-			});
+	const handleJsonChange = (e) => {
+		const value = e.target.value;
+		setJsonText(value);
+		try {
+			const parsed = JSON.parse(value);
+			setV2Data(parsed);
+			setJsonError('');
+		} catch (err) {
+			setJsonError(err.message);
 		}
-	}, []);
+	};
 
-	useEffect(() => {
-		if (codeMirrorRef.current) {
-			const current = codeMirrorRef.current.getValue();
-			const newValue = JSON.stringify(embedData, null, 2);
-			if (current !== newValue) {
-				try {
-					JSON.parse(current);
-				} catch {
-					codeMirrorRef.current.setValue(newValue);
-				}
+	const addContainer = () => {
+		setV2Data((prev) => ({
+			...prev,
+			containers: [
+				...(prev.containers || []),
+				{
+					components: [],
+					color: null,
+					spoiler: false,
+				},
+			],
+		}));
+	};
+
+	const removeContainer = (containerIndex) => {
+		setV2Data((prev) => ({
+			...prev,
+			containers: prev.containers.filter((_, i) => i !== containerIndex),
+		}));
+	};
+
+	const updateContainer = (containerIndex, field, value) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			newContainers[containerIndex] = {
+				...newContainers[containerIndex],
+				[field]: value,
+			};
+			return {
+				...prev,
+				containers: newContainers,
+			};
+		});
+	};
+
+	const addComponentToContainer = (containerIndex, componentType) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+
+			let newComponent;
+			switch (componentType) {
+				case 'section': // SectionComponents
+					newComponent = {
+						type: 'section',
+						title: 'Section Title',
+					};
+					break;
+				case 'media_gallery': // MediaGalleryComponents
+					newComponent = {
+						type: 'media_gallery',
+						items: [],
+					};
+					break;
+				case 'separator': // SeparatorComponents
+					newComponent = {
+						type: 'separator',
+						spacing: 1,
+					};
+					break;
+				case 'text_display': // TextDisplayComponents
+					newComponent = {
+						type: 'text_display',
+						content: 'Text content',
+					};
+					break;
+				case 'file': // FileComponents
+					newComponent = {
+						type: 'file',
+						filename: 'file.txt',
+					};
+					break;
+				case 'action_row': // ActionRowComponents
+					newComponent = {
+						type: 'action_row',
+						components: [],
+					};
+					break;
+				default:
+					return prev;
 			}
-		}
-	}, [embedData]);
+
+			container.components = [...container.components, newComponent];
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const updateComponent = (containerIndex, componentIndex, field, value) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const components = [...container.components];
+			components[componentIndex] = {
+				...components[componentIndex],
+				[field]: value,
+			};
+			container.components = components;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const removeComponent = (containerIndex, componentIndex) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			container.components = container.components.filter(
+				(_, i) => i !== componentIndex,
+			);
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const addSelectOption = (containerIndex, componentIndex) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			component.options = [
+				...(component.options || []),
+				{
+					label: `Option ${(component.options?.length || 0) + 1}`,
+					value: `option${(component.options?.length || 0) + 1}`,
+					description: '',
+				},
+			];
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const updateSelectOption = (
+		containerIndex,
+		componentIndex,
+		optionIndex,
+		field,
+		value,
+	) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			const options = [...component.options];
+			options[optionIndex] = { ...options[optionIndex], [field]: value };
+			component.options = options;
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const removeSelectOption = (containerIndex, componentIndex, optionIndex) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			component.options = component.options.filter((_, i) => i !== optionIndex);
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const renderComponentEditor = (
+		container,
+		containerIndex,
+		component,
+		componentIndex,
+	) => {
+		const typeNames = {
+			section: 'SectionComponents',
+			media_gallery: 'MediaGalleryComponents',
+			separator: 'SeparatorComponents',
+			text_display: 'TextDisplayComponents',
+			file: 'FileComponents',
+			action_row: 'ActionRowComponents',
+		};
+
+		return (
+			<div
+				key={componentIndex}
+				className="ba b--black-10 pa2 mb2 br2 bg-black-05"
+			>
+				<div className="flex items-center justify-between mb2">
+					<span className="white-80 f6">
+						{typeNames[component.type] || 'Unknown'}
+					</span>
+					<button
+						className="button-reset bg-red white pa1 br2 pointer bn f7"
+						onClick={() => removeComponent(containerIndex, componentIndex)}
+					>
+						削除
+					</button>
+				</div>
+
+				{/* 各コンポーネントタイプの詳細エディター（後で実装） */}
+				<div className="white-70 pa2 f6">
+					{component.type}の詳細設定（実装予定）
+				</div>
+			</div>
+		);
+	};
 
 	return (
-		<div className="pa3">
-			<div className="mb3">
-				<h3 className="fw6 mb2">JSON Editor</h3>
-				<div
-					ref={editorRef}
-					className="ba b--black-20 br2"
-					style={{ height: '400px' }}
-				></div>
+		<div className="flex flex-column" style={{ height: 'calc(100vh - 120px)' }}>
+			{/* GUI Editor - Top Half */}
+			<div
+				className="pa3"
+				style={{ flex: '1', overflowY: 'auto', borderBottom: '1px solid #000' }}
+			>
+				<div className="flex items-center justify-between mb3">
+					<h3 className="fw6 white ma0">GUIエディター</h3>
+					<button
+						className="button-reset bg-blue white pa2 br2 pointer bn"
+						onClick={addContainer}
+					>
+						+ containerを追加する
+					</button>
+				</div>
+
+				{v2Data.containers && v2Data.containers.length > 0 ? (
+					v2Data.containers.map((container, containerIndex) => (
+						<div key={containerIndex} className="ba b--black-20 pa3 mb3 br2">
+							<div className="flex items-center justify-between mb2">
+								<h4 className="fw6 white ma0">
+									Container {containerIndex + 1}
+								</h4>
+								<button
+									className="button-reset bg-red white pa2 br2 pointer bn"
+									onClick={() => removeContainer(containerIndex)}
+								>
+									削除
+								</button>
+							</div>
+
+							<div className="mb3 flex" style={{ height: '32px', gap: '16px' }}>
+								<div
+									style={{
+										flex: '1',
+										display: 'flex',
+										alignItems: 'center',
+										gap: '12px',
+									}}
+								>
+									<label
+										className="flex items-center white f6"
+										style={{ whiteSpace: 'nowrap' }}
+									>
+										<input
+											type="checkbox"
+											className="mr2"
+											checked={
+												container.color !== null &&
+												container.color !== undefined
+											}
+											onChange={(e) =>
+												updateContainer(
+													containerIndex,
+													'color',
+													e.target.checked ? '#5865f2' : null,
+												)
+											}
+										/>
+										色を設定
+									</label>
+									{container.color && (
+										<input
+											type="color"
+											className="input-reset ba b--black-20 br2 pointer"
+											style={{ width: '60px', height: '32px' }}
+											value={container.color || '#5865f2'}
+											onChange={(e) =>
+												updateContainer(containerIndex, 'color', e.target.value)
+											}
+										/>
+									)}
+								</div>
+								<div
+									style={{
+										flex: '0 0 auto',
+										display: 'flex',
+										alignItems: 'center',
+									}}
+								>
+									<label className="flex items-center white f6">
+										<input
+											type="checkbox"
+											className="mr2"
+											checked={container.spoiler || false}
+											onChange={(e) =>
+												updateContainer(
+													containerIndex,
+													'spoiler',
+													e.target.checked,
+												)
+											}
+										/>
+										スポイラーとしてマーク
+									</label>
+								</div>
+							</div>
+
+							<div className="mb3">
+								<label className="db fw6 mb2 white">コンポーネントを追加</label>
+								<div className="flex flex-wrap" style={{ gap: '8px' }}>
+									<button
+										className="button-reset bg-blue white pa2 br2 pointer bn f6"
+										onClick={() =>
+											addComponentToContainer(containerIndex, 'section')
+										}
+									>
+										+ SectionComponents
+									</button>
+									<button
+										className="button-reset bg-blue white pa2 br2 pointer bn f6"
+										onClick={() =>
+											addComponentToContainer(containerIndex, 'media_gallery')
+										}
+									>
+										+ MediaGalleryComponents
+									</button>
+									<button
+										className="button-reset bg-blue white pa2 br2 pointer bn f6"
+										onClick={() =>
+											addComponentToContainer(containerIndex, 'separator')
+										}
+									>
+										+ SeparatorComponents
+									</button>
+									<button
+										className="button-reset bg-blue white pa2 br2 pointer bn f6"
+										onClick={() =>
+											addComponentToContainer(containerIndex, 'text_display')
+										}
+									>
+										+ TextDisplayComponents
+									</button>
+									<button
+										className="button-reset bg-blue white pa2 br2 pointer bn f6"
+										onClick={() =>
+											addComponentToContainer(containerIndex, 'file')
+										}
+									>
+										+ FileComponents
+									</button>
+									<button
+										className="button-reset bg-blue white pa2 br2 pointer bn f6"
+										onClick={() =>
+											addComponentToContainer(containerIndex, 'action_row')
+										}
+									>
+										+ ActionRowComponents
+									</button>
+								</div>
+							</div>
+
+							{container.components && container.components.length > 0 ? (
+								container.components.map((component, componentIndex) =>
+									renderComponentEditor(
+										container,
+										containerIndex,
+										component,
+										componentIndex,
+									),
+								)
+							) : (
+								<div className="white-60 tc pa3 f6">
+									このコンテナにはまだコンポーネントがありません
+								</div>
+							)}
+						</div>
+					))
+				) : (
+					<div className="white-60 tc pa4">
+						「+ containerを追加する」ボタンをクリックして開始
+					</div>
+				)}
+			</div>
+			<div className="pa3" style={{ flex: '1', overflowY: 'auto' }}>
+				<h3 className="fw6 mb2 white">JSONエディター</h3>
+				<textarea
+					className="input-reset ba b--black-20 pa2 w-100 br2 white bg-near-black code"
+					style={{
+						height: 'calc(100% - 60px)',
+						fontFamily: 'monospace',
+						fontSize: '14px',
+						lineHeight: '1.5',
+						resize: 'none',
+					}}
+					value={jsonText}
+					onChange={handleJsonChange}
+				/>
 				{jsonError && (
-					<div className="bg-light-red pa2 mt2 br2 dark-red">
+					<div
+						className="bg-light-red pa2 mt2 br2 dark-red"
+						style={{ fontSize: '12px' }}
+					>
 						エラー：{jsonError}
 					</div>
 				)}
@@ -1203,6 +1570,8 @@ function EmbedPreview({ embedData }) {
 // Main App Component
 function App() {
 	const [activeTab, setActiveTab] = useState('v1');
+
+	// v1 用のデータ
 	const [embedData, setEmbedData] = useState({
 		content: 'Check out this awesome embed!',
 		title: 'Sample Embed',
@@ -1224,6 +1593,12 @@ function App() {
 			},
 		],
 	});
+
+	// v2 用のデータ（独立）
+	const [v2Data, setV2Data] = useState({
+		containers: [],
+	});
+
 	const [jsonText, setJsonText] = useState('');
 	const [jsonError, setJsonError] = useState('');
 
@@ -1245,18 +1620,20 @@ function App() {
 	};
 
 	const copyJSON = () => {
-		navigator.clipboard.writeText(JSON.stringify(embedData, null, 2));
+		const data = activeTab === 'v1' ? embedData : v2Data;
+		navigator.clipboard.writeText(JSON.stringify(data, null, 2));
 		alert('JSONをクリップボードにコピーしました！');
 	};
 
 	const exportJSON = () => {
-		const blob = new Blob([JSON.stringify(embedData, null, 2)], {
+		const data = activeTab === 'v1' ? embedData : v2Data;
+		const blob = new Blob([JSON.stringify(data, null, 2)], {
 			type: 'application/json',
 		});
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = 'discord-embed.json';
+		a.download = `discord-embed-${activeTab}.json`;
 		a.click();
 	};
 
@@ -1302,55 +1679,213 @@ function App() {
 
 			{/* Content */}
 			<div className="flex flex-wrap">
-				<div className="w-100 w-50-l" style={{ backgroundColor: '#36393f' }}>
-					{activeTab === 'v1' ? (
-						<ComponentV1 embedData={embedData} setEmbedData={setEmbedData} />
-					) : (
-						<ComponentV2 embedData={embedData} setEmbedData={setEmbedData} />
-					)}
-				</div>
-				<div className="w-100 w-50-l">
-					<EmbedPreview embedData={embedData} />
-					<div className="pa3 flex gap2" style={{ backgroundColor: '#36393f' }}>
-						<button
-							className="button-reset bg-blue white pa2 br2 pointer bn mr2"
-							onClick={copyJSON}
+				{activeTab === 'v1' ? (
+					<>
+						<div
+							className="w-100 w-50-l"
+							style={{ backgroundColor: '#36393f' }}
 						>
-							📋 JSONをコピー
-						</button>
-						<button
-							className="button-reset bg-green white pa2 br2 pointer bn"
-							onClick={exportJSON}
-						>
-							💾 JSONファイルをエクスポート
-						</button>
-					</div>
-					{activeTab === 'v1' && (
-						<div className="pa3" style={{ backgroundColor: '#36393f' }}>
-							<h3 className="fw6 mb2 white">JSON Editor</h3>
-							<textarea
-								className="input-reset ba b--black-20 pa2 w-100 br2 white bg-near-black code"
-								style={{
-									height: '400px',
-									fontFamily: 'monospace',
-									fontSize: '14px',
-									lineHeight: '1.5',
-									resize: 'vertical',
-								}}
-								value={jsonText}
-								onChange={handleJsonChange}
-							/>
-							{jsonError && (
-								<div
-									className="bg-light-red pa2 mt2 br2 dark-red"
-									style={{ fontSize: '12px' }}
-								>
-									エラー：{jsonError}
-								</div>
-							)}
+							<ComponentV1 embedData={embedData} setEmbedData={setEmbedData} />
 						</div>
-					)}
-				</div>
+						<div className="w-100 w-50-l">
+							<EmbedPreview embedData={embedData} />
+							<div
+								className="pa3 flex gap2"
+								style={{ backgroundColor: '#36393f' }}
+							>
+								<button
+									className="button-reset bg-blue white pa2 br2 pointer bn mr2"
+									onClick={copyJSON}
+								>
+									📋 JSONコピー
+								</button>
+								<button
+									className="button-reset bg-green white pa2 br2 pointer bn"
+									onClick={exportJSON}
+								>
+									💾 JSONエクスポート
+								</button>
+							</div>
+							<div className="pa3" style={{ backgroundColor: '#36393f' }}>
+								<h3 className="fw6 mb2 white">JSONエディター</h3>
+								<textarea
+									className="input-reset ba b--black-20 pa2 w-100 br2 white bg-near-black code"
+									style={{
+										height: '400px',
+										fontFamily: 'monospace',
+										fontSize: '14px',
+										lineHeight: '1.5',
+										resize: 'vertical',
+									}}
+									value={jsonText}
+									onChange={handleJsonChange}
+								/>
+								{jsonError && (
+									<div
+										className="bg-light-red pa2 mt2 br2 dark-red"
+										style={{ fontSize: '12px' }}
+									>
+										エラー：{jsonError}
+									</div>
+								)}
+							</div>
+						</div>
+					</>
+				) : (
+					<>
+						<div
+							className="w-100 w-50-l"
+							style={{ backgroundColor: '#36393f' }}
+						>
+							<ComponentV2 v2Data={v2Data} setV2Data={setV2Data} />
+						</div>
+						<div className="w-100 w-50-l">
+							<div
+								className="pa3"
+								style={{ backgroundColor: '#36393f', minHeight: '500px' }}
+							>
+								<h3 className="fw6 mb2 white">プレビュー</h3>
+								<div style={{ backgroundColor: '#36393f', padding: '20px' }}>
+									{v2Data.containers && v2Data.containers.length > 0 ? (
+										v2Data.containers.map((container, containerIndex) => (
+											<div key={containerIndex} className="mb3">
+												<div className="flex flex-wrap" style={{ gap: '8px' }}>
+													{container.components.map(
+														(component, componentIndex) => {
+															// Button Preview
+															if (component.type === 2) {
+																const buttonStyles = {
+																	1: {
+																		backgroundColor: '#5865f2',
+																		color: 'white',
+																	},
+																	2: {
+																		backgroundColor: '#4e5058',
+																		color: 'white',
+																	},
+																	3: {
+																		backgroundColor: '#248046',
+																		color: 'white',
+																	},
+																	4: {
+																		backgroundColor: '#da373c',
+																		color: 'white',
+																	},
+																	5: {
+																		backgroundColor: '#4e5058',
+																		color: 'white',
+																	},
+																};
+																const style =
+																	buttonStyles[component.style] ||
+																	buttonStyles[2];
+																return (
+																	<button
+																		key={componentIndex}
+																		style={{
+																			...style,
+																			padding: '8px 16px',
+																			borderRadius: '4px',
+																			border: 'none',
+																			cursor: component.disabled
+																				? 'not-allowed'
+																				: 'pointer',
+																			opacity: component.disabled ? 0.5 : 1,
+																			fontWeight: 500,
+																			fontSize: '14px',
+																		}}
+																		disabled={component.disabled}
+																	>
+																		{component.label || 'Button'}
+																		{component.style === 5 && ' 🔗'}
+																	</button>
+																);
+															}
+
+															// Select Menu Preview
+															if ([3, 5, 6, 7, 8].includes(component.type)) {
+																const selectLabels = {
+																	3: '文字列選択',
+																	5: 'ユーザー選択',
+																	6: 'ロール選択',
+																	7: 'メンション可能選択',
+																	8: 'チャンネル選択',
+																};
+																return (
+																	<div
+																		key={componentIndex}
+																		style={{
+																			width: '100%',
+																			backgroundColor: '#383a40',
+																			padding: '12px',
+																			borderRadius: '4px',
+																			color: '#b9bbbe',
+																			fontSize: '14px',
+																			marginBottom: '8px',
+																		}}
+																	>
+																		{component.placeholder ||
+																			selectLabels[component.type]}
+																	</div>
+																);
+															}
+
+															// Text Input Preview
+															if (component.type === 4) {
+																return (
+																	<div
+																		key={componentIndex}
+																		style={{
+																			width: '100%',
+																			backgroundColor: '#383a40',
+																			padding:
+																				component.style === 2 ? '12px' : '8px',
+																			borderRadius: '4px',
+																			color: '#72767d',
+																			fontSize: '14px',
+																			marginBottom: '8px',
+																			minHeight:
+																				component.style === 2 ? '80px' : 'auto',
+																		}}
+																	>
+																		{component.placeholder || component.label}
+																	</div>
+																);
+															}
+
+															return null;
+														},
+													)}
+												</div>
+											</div>
+										))
+									) : (
+										<div className="white-60 tc pa4">
+											コンテナを追加してプレビューを表示
+										</div>
+									)}
+								</div>
+							</div>
+							<div
+								className="pa3 flex gap2"
+								style={{ backgroundColor: '#36393f' }}
+							>
+								<button
+									className="button-reset bg-blue white pa2 br2 pointer bn mr2"
+									onClick={copyJSON}
+								>
+									📋 JSONコピー
+								</button>
+								<button
+									className="button-reset bg-green white pa2 br2 pointer bn"
+									onClick={exportJSON}
+								>
+									💾 JSONエクスポート
+								</button>
+							</div>
+						</div>
+					</>
+				)}
 			</div>
 		</div>
 	);
