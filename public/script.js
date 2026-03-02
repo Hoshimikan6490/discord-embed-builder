@@ -501,6 +501,8 @@ function ComponentV1({ embedData, setEmbedData }) {
 function ComponentV2({ v2Data, setV2Data }) {
 	const [jsonText, setJsonText] = useState('');
 	const [jsonError, setJsonError] = useState('');
+	const [draggedTextDisplay, setDraggedTextDisplay] = useState(null);
+	const [draggedOverTextDisplay, setDraggedOverTextDisplay] = useState(null);
 
 	// Update jsonText when v2Data changes
 	useEffect(() => {
@@ -564,7 +566,8 @@ function ComponentV2({ v2Data, setV2Data }) {
 				case 'section': // SectionComponents
 					newComponent = {
 						type: 'section',
-						title: 'Section Title',
+						components: [],
+						accessory: null,
 					};
 					break;
 				case 'media_gallery': // MediaGalleryComponents
@@ -685,6 +688,144 @@ function ComponentV2({ v2Data, setV2Data }) {
 		});
 	};
 
+	// TextDisplay管理関数（Section用）
+	const addTextDisplay = (containerIndex, componentIndex) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			component.components = [
+				...(component.components || []),
+				{ type: 'TextDisplay', content: 'Text content' },
+			];
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const removeTextDisplay = (containerIndex, componentIndex, textIndex) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			component.components = component.components.filter(
+				(_, i) => i !== textIndex,
+			);
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const updateTextDisplay = (
+		containerIndex,
+		componentIndex,
+		textIndex,
+		value,
+	) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			const textDisplays = [...component.components];
+			textDisplays[textIndex] = { type: 'TextDisplay', content: value };
+			component.components = textDisplays;
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const reorderTextDisplays = (
+		containerIndex,
+		componentIndex,
+		fromIndex,
+		toIndex,
+	) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			const textDisplays = [...component.components];
+			const [movedItem] = textDisplays.splice(fromIndex, 1);
+			textDisplays.splice(toIndex, 0, movedItem);
+			component.components = textDisplays;
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	// Accessory管理関数（Section用）
+	const addAccessory = (containerIndex, componentIndex, accessoryType) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+
+			if (accessoryType === 'button') {
+				component.accessory = {
+					type: 'button',
+					label: 'Button',
+					style: 1,
+					custom_id: `btn_${Date.now()}`,
+				};
+			} else if (accessoryType === 'thumbnail') {
+				component.accessory = {
+					type: 'thumbnail',
+					media: {
+						url: '',
+					},
+				};
+			}
+
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const removeAccessory = (containerIndex, componentIndex) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			component.accessory = null;
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const updateAccessory = (containerIndex, componentIndex, field, value) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+
+			if (field === 'media_url') {
+				// thumbnail accessoryのmedia.url更新
+				component.accessory = {
+					...component.accessory,
+					media: {
+						...component.accessory.media,
+						url: value,
+					},
+				};
+			} else {
+				component.accessory = {
+					...component.accessory,
+					[field]: value,
+				};
+			}
+
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
 	const renderComponentEditor = (
 		container,
 		containerIndex,
@@ -717,10 +858,265 @@ function ComponentV2({ v2Data, setV2Data }) {
 					</button>
 				</div>
 
-				{/* 各コンポーネントタイプの詳細エディター（後で実装） */}
-				<div className="white-70 pa2 f6">
-					{component.type}の詳細設定（実装予定）
-				</div>
+				{/* Section Components */}
+				{component.type === 'section' && (
+					<>
+						{/* Components (TextDisplays) */}
+						<div className="mb2">
+							<div className="flex items-center justify-between mb1">
+								<label className="db fw6 white f6">
+									Components (TextDisplay)
+								</label>
+								<button
+									className="button-reset bg-blue white pa1 br2 pointer bn f7"
+									onClick={() => addTextDisplay(containerIndex, componentIndex)}
+								>
+									+ TextDisplay
+								</button>
+							</div>
+							{component.components?.map((textDisplay, textIndex) => (
+								<div
+									key={textIndex}
+									className="ba b--black-10 pa2 mb2 br2"
+									draggable
+									onDragStart={(e) => {
+										setDraggedTextDisplay({
+											containerIndex,
+											componentIndex,
+											textIndex,
+										});
+										e.dataTransfer.effectAllowed = 'move';
+									}}
+									onDragOver={(e) => {
+										e.preventDefault();
+										e.dataTransfer.dropEffect = 'move';
+										setDraggedOverTextDisplay({
+											containerIndex,
+											componentIndex,
+											textIndex,
+										});
+									}}
+									onDragLeave={(e) => {
+										e.preventDefault();
+										setDraggedOverTextDisplay(null);
+									}}
+									onDrop={(e) => {
+										e.preventDefault();
+										setDraggedOverTextDisplay(null);
+										if (
+											draggedTextDisplay &&
+											draggedTextDisplay.containerIndex === containerIndex &&
+											draggedTextDisplay.componentIndex === componentIndex &&
+											draggedTextDisplay.textIndex !== textIndex
+										) {
+											reorderTextDisplays(
+												containerIndex,
+												componentIndex,
+												draggedTextDisplay.textIndex,
+												textIndex,
+											);
+										}
+									}}
+									onDragEnd={() => {
+										setDraggedTextDisplay(null);
+										setDraggedOverTextDisplay(null);
+									}}
+									style={{
+										cursor: 'move',
+										opacity:
+											draggedTextDisplay?.containerIndex === containerIndex &&
+											draggedTextDisplay?.componentIndex === componentIndex &&
+											draggedTextDisplay?.textIndex === textIndex
+												? 0.5
+												: 1,
+										borderTop:
+											draggedOverTextDisplay?.containerIndex ===
+												containerIndex &&
+											draggedOverTextDisplay?.componentIndex ===
+												componentIndex &&
+											draggedOverTextDisplay?.textIndex === textIndex &&
+											draggedTextDisplay &&
+											draggedTextDisplay.textIndex > textIndex
+												? '3px solid #357edd'
+												: undefined,
+										borderBottom:
+											draggedOverTextDisplay?.containerIndex ===
+												containerIndex &&
+											draggedOverTextDisplay?.componentIndex ===
+												componentIndex &&
+											draggedOverTextDisplay?.textIndex === textIndex &&
+											draggedTextDisplay &&
+											draggedTextDisplay.textIndex < textIndex
+												? '3px solid #357edd'
+												: undefined,
+									}}
+								>
+									<div className="flex items-center justify-between mb1">
+										<span className="white-70 f7">
+											<span
+												style={{
+													display: 'inline-block',
+													marginRight: '8px',
+													cursor: 'grab',
+												}}
+											>
+												⋮⋮
+											</span>
+											TextDisplay {textIndex + 1}
+										</span>
+										<button
+											className="button-reset bg-red white pa1 br2 pointer bn f7"
+											onClick={() =>
+												removeTextDisplay(
+													containerIndex,
+													componentIndex,
+													textIndex,
+												)
+											}
+										>
+											削除
+										</button>
+									</div>
+									<textarea
+										className="input-reset ba b--black-20 pa2 w-100 br2 f6"
+										value={textDisplay.content || ''}
+										onChange={(e) =>
+											updateTextDisplay(
+												containerIndex,
+												componentIndex,
+												textIndex,
+												e.target.value,
+											)
+										}
+										rows="3"
+										placeholder="Text content"
+									/>
+								</div>
+							))}
+						</div>
+
+						{/* Accessory */}
+						<div className="mb2">
+							<label className="db fw6 mb1 white f6">Accessory</label>
+							{!component.accessory ? (
+								<div className="flex" style={{ gap: '8px' }}>
+									<button
+										className="button-reset bg-blue white pa2 br2 pointer bn f6"
+										onClick={() =>
+											addAccessory(containerIndex, componentIndex, 'button')
+										}
+									>
+										+ Button Accessory
+									</button>
+									<button
+										className="button-reset bg-blue white pa2 br2 pointer bn f6"
+										onClick={() =>
+											addAccessory(containerIndex, componentIndex, 'thumbnail')
+										}
+									>
+										+ Thumbnail Accessory
+									</button>
+								</div>
+							) : (
+								<div className="ba b--black-10 pa2 br2">
+									<div className="flex items-center justify-between mb2">
+										<span className="white-80 f6">
+											{component.accessory.type === 'button'
+												? 'Button Accessory'
+												: 'Thumbnail Accessory'}
+										</span>
+										<button
+											className="button-reset bg-red white pa1 br2 pointer bn f7"
+											onClick={() =>
+												removeAccessory(containerIndex, componentIndex)
+											}
+										>
+											削除
+										</button>
+									</div>
+
+									{component.accessory.type === 'button' && (
+										<>
+											<div className="mb2">
+												<label className="db fw6 mb1 white f6">Label</label>
+												<input
+													type="text"
+													className="input-reset ba b--black-20 pa2 w-100 br2 f6"
+													value={component.accessory.label || ''}
+													onChange={(e) =>
+														updateAccessory(
+															containerIndex,
+															componentIndex,
+															'label',
+															e.target.value,
+														)
+													}
+												/>
+											</div>
+											<div className="mb2">
+												<label className="db fw6 mb1 white f6">Style</label>
+												<select
+													className="input-reset ba b--black-20 pa2 w-100 br2 f6"
+													value={component.accessory.style || 1}
+													onChange={(e) =>
+														updateAccessory(
+															containerIndex,
+															componentIndex,
+															'style',
+															parseInt(e.target.value),
+														)
+													}
+												>
+													<option value="1">Primary</option>
+													<option value="2">Secondary</option>
+													<option value="3">Success</option>
+													<option value="4">Danger</option>
+													<option value="5">Link</option>
+												</select>
+											</div>
+											<div className="mb2">
+												<label className="db fw6 mb1 white f6">Custom ID</label>
+												<input
+													type="text"
+													className="input-reset ba b--black-20 pa2 w-100 br2 f6"
+													value={component.accessory.custom_id || ''}
+													onChange={(e) =>
+														updateAccessory(
+															containerIndex,
+															componentIndex,
+															'custom_id',
+															e.target.value,
+														)
+													}
+												/>
+											</div>
+										</>
+									)}
+
+									{component.accessory.type === 'thumbnail' && (
+										<div className="mb2">
+											<label className="db fw6 mb1 white f6">Image URL</label>
+											<input
+												type="url"
+												className="input-reset ba b--black-20 pa2 w-100 br2 f6"
+												value={component.accessory.media?.url || ''}
+												onChange={(e) =>
+													updateAccessory(
+														containerIndex,
+														componentIndex,
+														'media_url',
+														e.target.value,
+													)
+												}
+												placeholder="https://example.com/image.png"
+											/>
+										</div>
+									)}
+								</div>
+							)}
+						</div>
+					</>
+				)}
 			</div>
 		);
 	};
