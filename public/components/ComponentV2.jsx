@@ -34,7 +34,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 				...(prev.containers || []),
 				{
 					components: [],
-					color: null,
+					color: '#5865f2',
 					spoiler: false,
 				},
 			],
