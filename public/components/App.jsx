@@ -135,7 +135,7 @@ export default function App() {
 								/>
 								{jsonError && (
 									<div
-										className="bg-light-red pa2 mt2 br2 dark-red"
+										className="bg-red pa2 mt2 br2 white b"
 										style={{ fontSize: '12px' }}
 									>
 										エラー：{jsonError}
