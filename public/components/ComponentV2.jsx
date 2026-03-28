@@ -430,13 +430,13 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 						<div className="mb2">
 							<div className="flex items-center justify-between mb1">
 								<label className="db fw6 white f6">
-									Components (TextDisplay)
+									文字列
 								</label>
 								<button
 									className="button-reset bg-blue white pa1 br2 pointer bn f7"
 									onClick={() => addTextDisplay(containerIndex, componentIndex)}
 								>
-									+ TextDisplay
+									+ 文字列を追加
 								</button>
 							</div>
 							{component.components?.map((textDisplay, textIndex) => (
@@ -562,26 +562,31 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 
 						{/* Accessory */}
 						<div className="mb2">
-							<label className="db fw6 mb1 white f6">Accessory</label>
+							<div className="flex items-center justify-between mb1">
+								<label className="db fw6 white f6">アクセサリー</label>
+								{!component.accessory && (
+									<div className="flex items-center" style={{ gap: '8px' }}>
+										<button
+											className="button-reset bg-blue white pa1 br2 pointer bn f7"
+											onClick={() =>
+												addAccessory(containerIndex, componentIndex, 'button')
+											}
+										>
+											+ ボタンを追加
+										</button>
+										<button
+											className="button-reset bg-blue white pa1 br2 pointer bn f7"
+											onClick={() =>
+												addAccessory(containerIndex, componentIndex, 'thumbnail')
+											}
+										>
+											+ 画像を追加
+										</button>
+									</div>
+								)}
+							</div>
 							{!component.accessory ? (
-								<div className="flex" style={{ gap: '8px' }}>
-									<button
-										className="button-reset bg-blue white pa2 br2 pointer bn f6"
-										onClick={() =>
-											addAccessory(containerIndex, componentIndex, 'button')
-										}
-									>
-										+ Button Accessory
-									</button>
-									<button
-										className="button-reset bg-blue white pa2 br2 pointer bn f6"
-										onClick={() =>
-											addAccessory(containerIndex, componentIndex, 'thumbnail')
-										}
-									>
-										+ Thumbnail Accessory
-									</button>
-								</div>
+								null
 							) : (
 								<div className="ba b--black-10 pa2 br2">
 									<div className="flex items-center justify-between mb2">
@@ -707,7 +712,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 					<div className="mb2">
 						<div className="flex items-center justify-between mb2">
 							<label className="db fw6 white f6">
-								Media Items ({component.items?.length || 0}/10)
+								メディア ({component.items?.length || 0}/10)
 							</label>
 							<button
 								className={`button-reset pa1 br2 bn f7 ${
