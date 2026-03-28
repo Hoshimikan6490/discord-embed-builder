@@ -113,38 +113,66 @@ export default function App() {
 			</div>
 
 			{/* Tabs */}
-			<div
-				className="flex bg-near-black"
-				style={{ backgroundColor: '#202225', borderBottom: '1px solid #000' }}
-			>
-				<button
-					className={`pa3 pointer bn bg-transparent white ${activeTab === 'v1' ? 'bb bw2 b--blue' : ''}`}
-					onClick={() => setActiveTab('v1')}
+			<div className="ph2 pt2" style={{ backgroundColor: '#202225' }}>
+				<div
+					className="flex"
+					role="tablist"
+					aria-label="Component version tabs"
 					style={{
-						fontSize: '14px',
-						fontWeight: 600,
-						opacity: activeTab === 'v1' ? 1 : 0.6,
-						transition: 'opacity 0.2s',
+						borderRadius: 0,
+						padding: '4px 4px 0 4px',
+						gap: '4px',
 					}}
 				>
-					Component v1
-				</button>
-				<button
-					className={`pa3 pointer bn bg-transparent white ${activeTab === 'v2' ? 'bb bw2 b--blue' : ''}`}
-					onClick={() => setActiveTab('v2')}
-					style={{
-						fontSize: '14px',
-						fontWeight: 600,
-						opacity: activeTab === 'v2' ? 1 : 0.6,
-						transition: 'opacity 0.2s',
-					}}
-				>
-					Component v2
-				</button>
+					<button
+						role="tab"
+						aria-selected={activeTab === 'v1'}
+						className="pointer bn white tab-button"
+						onClick={() => setActiveTab('v1')}
+						style={{
+							padding: '12px 15px 10px',
+							fontSize: '14px',
+							fontWeight: 700,
+							borderRadius: '8px 8px 0 0',
+							backgroundColor:
+								activeTab === 'v1' ? 'rgb(43, 45, 49)' : 'transparent',
+							opacity: activeTab === 'v1' ? 1 : 0.75,
+							boxShadow:
+								activeTab === 'v1'
+									? '0 2px 8px rgba(43, 45, 49, 0.35)'
+									: 'none',
+							transition: 'all 0.2s ease',
+						}}
+					>
+						Component v1
+					</button>
+					<button
+						role="tab"
+						aria-selected={activeTab === 'v2'}
+						className="pointer bn white tab-button"
+						onClick={() => setActiveTab('v2')}
+						style={{
+							padding: '12px 15px 10px',
+							fontSize: '14px',
+							fontWeight: 700,
+							borderRadius: '8px 8px 0 0',
+							backgroundColor:
+								activeTab === 'v2' ? 'rgb(43, 45, 49)' : 'transparent',
+							opacity: activeTab === 'v2' ? 1 : 0.75,
+							boxShadow:
+								activeTab === 'v2'
+									? '0 2px 8px rgba(43, 45, 49, 0.35)'
+									: 'none',
+							transition: 'all 0.2s ease',
+						}}
+					>
+						Component v2
+					</button>
+				</div>
 			</div>
 
 			{/* Content */}
-			<div className="flex flex-wrap">
+			<div className="flex flex-wrap" style={{ marginTop: 0 }}>
 				{activeTab === 'v1' ? (
 					<>
 						<div
