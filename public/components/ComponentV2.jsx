@@ -542,24 +542,43 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 											</div>
 											<div className="mb2">
 												<label className="db fw6 mb1 white f6">Style</label>
-												<select
-													className="input-reset ba b--black-20 pa2 w-100 br2 f6"
-													value={component.accessory.style || 1}
-													onChange={(e) =>
-														updateAccessory(
-															containerIndex,
-															componentIndex,
-															'style',
-															parseInt(e.target.value),
-														)
-													}
-												>
-													<option value="1">Primary</option>
-													<option value="2">Secondary</option>
-													<option value="3">Success</option>
-													<option value="4">Danger</option>
-													<option value="5">Link</option>
-												</select>
+												<div style={{ position: 'relative' }}>
+													<select
+														className="input-reset ba b--black-20 pa2 w-100 br2 f6"
+														style={{ paddingRight: '32px', appearance: 'none' }}
+														value={component.accessory.style || 1}
+														onChange={(e) =>
+															updateAccessory(
+																containerIndex,
+																componentIndex,
+																'style',
+																parseInt(e.target.value),
+															)
+														}
+													>
+														<option value="1">Primary</option>
+														<option value="2">Secondary</option>
+														<option value="3">Success</option>
+														<option value="4">Danger</option>
+														<option value="5">Link</option>
+													</select>
+													<span
+														aria-hidden="true"
+														style={{
+															position: 'absolute',
+															right: '10px',
+															top: '50%',
+															transform: 'translateY(-50%) rotate(90deg)',
+															color: '#1f2328',
+															pointerEvents: 'none',
+															fontSize: '16px',
+															fontWeight: 700,
+															lineHeight: 1,
+														}}
+													>
+														❯
+													</span>
+												</div>
 											</div>
 											<div className="mb2">
 												<label className="db fw6 mb1 white f6">Custom ID</label>
