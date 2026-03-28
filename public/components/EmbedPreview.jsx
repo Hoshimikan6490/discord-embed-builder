@@ -12,7 +12,7 @@ function renderV2Preview(v2Data) {
 		>
 			<div className="flex items-start" style={{ maxWidth: '576px' }}>
 				<img
-					src="/images/discord_logo.png"
+					src="./assets/images/discord_logo.png"
 					alt="Bot Avatar"
 					style={{
 						width: '40px',
@@ -24,7 +24,7 @@ function renderV2Preview(v2Data) {
 						flexShrink: 0,
 					}}
 					onError={(e) => {
-						e.target.src = '/images/discord_logo.svg';
+						e.target.src = './assets/images/discord_logo.svg';
 						e.target.onerror = null;
 					}}
 				/>
@@ -374,7 +374,7 @@ export default function EmbedPreview({ embedData, v2Data }) {
 			{/* Message Container */}
 			<div className="flex items-start" style={{ maxWidth: '576px' }}>
 				<img
-					src="/images/discord_logo.png"
+					src="./assets/images/discord_logo.png"
 					alt="Bot Avatar"
 					style={{
 						width: '40px',
@@ -387,7 +387,7 @@ export default function EmbedPreview({ embedData, v2Data }) {
 					}}
 					onError={(e) => {
 						// Fallback to SVG if PNG is not available
-						e.target.src = '/images/discord_logo.svg';
+						e.target.src = './assets/images/discord_logo.svg';
 						e.target.onerror = null;
 					}}
 				/>
