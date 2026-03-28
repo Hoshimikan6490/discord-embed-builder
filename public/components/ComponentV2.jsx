@@ -935,7 +935,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 									</div>
 
 									<div className="mb2">
-										<label className="db fw6 mb1 white f6">Image URL</label>
+										<label className="db fw6 mb1 white f6">メディアのURL</label>
 										<input
 											type="url"
 											className="input-reset ba b--black-20 pa2 w-100 br2 f6"
@@ -954,9 +954,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 									</div>
 
 									<div className="mb2">
-										<label className="db fw6 mb1 white f6">
-											Description (ALT)
-										</label>
+										<label className="db fw6 mb1 white f6">ALT属性</label>
 										<textarea
 											className="input-reset ba b--black-20 pa2 w-100 br2 f6"
 											value={item.description || ''}
@@ -971,7 +969,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 											}
 											rows="3"
 											maxLength="1024"
-											placeholder="画像の説明（ALT属性）"
+											placeholder="例: 夕焼けの海辺で白い犬が走っている写真"
 										/>
 										<div className="white-60 f7 mt1 tr">
 											{(item.description || '').length}/1024
