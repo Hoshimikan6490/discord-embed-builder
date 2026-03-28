@@ -628,12 +628,9 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 	};
 
 	return (
-		<div className="flex flex-column" style={{ height: 'calc(100vh - 120px)' }}>
+		<div className="flex flex-column">
 			{/* GUI Editor - Top Half */}
-			<div
-				className="pa3"
-				style={{ flex: '1', overflowY: 'auto', borderBottom: '1px solid #000' }}
-			>
+			<div className="pa3" style={{ borderBottom: '1px solid #000' }}>
 				<div className="flex items-center justify-between mb3">
 					<h3 className="fw6 white ma0">GUIエディター</h3>
 					<button
