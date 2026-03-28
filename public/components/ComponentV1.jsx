@@ -106,6 +106,7 @@ export default function ComponentV1({ embedData, setEmbedData }) {
 
 	const totalChars = calculateTotalCharacters();
 	const isOverLimit = totalChars > 6000;
+	const isTimestampEnabled = Boolean(embedData.timestamp);
 
 	return (
 		<div className="pa3">
@@ -206,22 +207,35 @@ export default function ComponentV1({ embedData, setEmbedData }) {
 			</div>
 
 			<div className="mb3">
-				<label className="db fw6 mb2 white">Timestamp</label>
-				<input
-					type="datetime-local"
-					className="input-reset ba b--black-20 pa2 w-100 br2"
-					value={
-						embedData.timestamp
-							? moment(embedData.timestamp).format('YYYY-MM-DDTHH:mm')
-							: ''
-					}
-					onChange={(e) =>
-						handleChange(
-							'timestamp',
-							e.target.value ? new Date(e.target.value).toISOString() : '',
-						)
-					}
-				/>
+				<div className="flex items-center">
+					<input
+						type="checkbox"
+						className="mr2"
+						checked={isTimestampEnabled}
+						onChange={(e) =>
+							handleChange(
+								'timestamp',
+								e.target.checked ? new Date().toISOString() : '',
+							)
+						}
+					/>
+					<input
+						type="datetime-local"
+						className="input-reset ba b--black-20 pa2 flex-auto br2"
+						disabled={!isTimestampEnabled}
+						value={
+							embedData.timestamp
+								? moment(embedData.timestamp).format('YYYY-MM-DDTHH:mm')
+								: ''
+						}
+						onChange={(e) =>
+							handleChange(
+								'timestamp',
+								e.target.value ? new Date(e.target.value).toISOString() : '',
+							)
+						}
+					/>
+				</div>
 			</div>
 
 			<div className="mb3">
