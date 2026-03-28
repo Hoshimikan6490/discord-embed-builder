@@ -124,6 +124,84 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 		});
 	};
 
+	// MediaGallery管理関数
+	const addMediaGalleryItem = (containerIndex, componentIndex) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			const currentItems = component.items || [];
+
+			if (currentItems.length >= 10) {
+				return prev;
+			}
+
+			component.items = [
+				...currentItems,
+				{
+					media: {
+						url: '',
+					},
+					description: '',
+					spoiler: false,
+				},
+			];
+
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const updateMediaGalleryItem = (
+		containerIndex,
+		componentIndex,
+		itemIndex,
+		field,
+		value,
+	) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			const items = [...(component.items || [])];
+			const item = { ...items[itemIndex] };
+
+			if (field === 'media_url') {
+				item.media = {
+					...(item.media || {}),
+					url: value,
+				};
+			} else {
+				item[field] = value;
+			}
+
+			items[itemIndex] = item;
+			component.items = items;
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const removeMediaGalleryItem = (
+		containerIndex,
+		componentIndex,
+		itemIndex,
+	) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			component.items = (component.items || []).filter(
+				(_, i) => i !== itemIndex,
+			);
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
 	const addSelectOption = (containerIndex, componentIndex) => {
 		setV2Data((prev) => {
 			const newContainers = [...prev.containers];
@@ -623,6 +701,122 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 						</div>
 					</>
 				)}
+
+				{/* Media Gallery Components */}
+				{component.type === 'media_gallery' && (
+					<div className="mb2">
+						<div className="flex items-center justify-between mb2">
+							<label className="db fw6 white f6">
+								Media Items ({component.items?.length || 0}/10)
+							</label>
+							<button
+								className={`button-reset pa1 br2 bn f7 ${
+									(component.items?.length || 0) >= 10
+										? 'bg-gray white o-50'
+										: 'bg-blue white pointer'
+								}`}
+								onClick={() =>
+									addMediaGalleryItem(containerIndex, componentIndex)
+								}
+								disabled={(component.items?.length || 0) >= 10}
+							>
+								+ メディアを追加
+							</button>
+						</div>
+
+						{(component.items?.length || 0) >= 10 && (
+							<div className="pa2 mb2 br2 bg-red white f7">
+								メディアは最大10個まで追加できます。
+							</div>
+						)}
+
+						{component.items && component.items.length > 0 ? (
+							component.items.map((item, itemIndex) => (
+								<div key={itemIndex} className="ba b--black-10 pa2 mb2 br2">
+									<div className="flex items-center justify-between mb2">
+										<span className="white-80 f7">Media {itemIndex + 1}</span>
+										<button
+											className="button-reset bg-red white pa1 br2 pointer bn f7"
+											onClick={() =>
+												removeMediaGalleryItem(
+													containerIndex,
+													componentIndex,
+													itemIndex,
+												)
+											}
+										>
+											削除
+										</button>
+									</div>
+
+									<div className="mb2">
+										<label className="db fw6 mb1 white f6">Image URL</label>
+										<input
+											type="url"
+											className="input-reset ba b--black-20 pa2 w-100 br2 f6"
+											value={item.media?.url || ''}
+											onChange={(e) =>
+												updateMediaGalleryItem(
+													containerIndex,
+													componentIndex,
+													itemIndex,
+													'media_url',
+													e.target.value,
+												)
+											}
+											placeholder="https://example.com/image.png"
+										/>
+									</div>
+
+									<div className="mb2">
+										<label className="db fw6 mb1 white f6">
+											Description (ALT)
+										</label>
+										<textarea
+											className="input-reset ba b--black-20 pa2 w-100 br2 f6"
+											value={item.description || ''}
+											onChange={(e) =>
+												updateMediaGalleryItem(
+													containerIndex,
+													componentIndex,
+													itemIndex,
+													'description',
+													e.target.value,
+												)
+											}
+											rows="3"
+											maxLength="1024"
+											placeholder="画像の説明（ALT属性）"
+										/>
+										<div className="white-60 f7 mt1 tr">
+											{(item.description || '').length}/1024
+										</div>
+									</div>
+
+									<label className="flex items-center white f6">
+										<input
+											type="checkbox"
+											className="mr2"
+											checked={item.spoiler || false}
+											onChange={(e) =>
+												updateMediaGalleryItem(
+													containerIndex,
+													componentIndex,
+													itemIndex,
+													'spoiler',
+													e.target.checked,
+												)
+											}
+										/>
+										スポイラーとしてマーク
+									</label>
+								</div>
+							))
+						) : (
+							<div className="white-60 f7">メディアがありません</div>
+						)}
+					</div>
+				)}
 			</div>
 		);
 	};
@@ -630,7 +824,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 	return (
 		<div className="flex flex-column">
 			{/* GUI Editor - Top Half */}
-			<div className="pa3" style={{ borderBottom: '1px solid #000' }}>
+			<div className="pa3">
 				<div className="flex items-center justify-between mb3">
 					<h3 className="fw6 white ma0">GUIエディター</h3>
 					<button

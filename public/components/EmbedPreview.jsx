@@ -64,24 +64,35 @@ function renderV2Preview(v2Data) {
 						</span>
 					</div>
 
-					{v2Data.containers.map((container, index) => (
-						<div
-							key={index}
-							style={{
-								backgroundColor: '#2f3136',
-								borderLeft: container.color
-									? `4px solid ${container.color}`
-									: '4px solid #202225',
-								borderRadius: '4px',
-								padding: '12px',
-								marginBottom: '8px',
-								filter: container.spoiler ? 'blur(8px)' : 'none',
-								cursor: container.spoiler ? 'pointer' : 'default',
-							}}
-						>
-							{renderContainerComponents(container)}
-						</div>
-					))}
+					{v2Data.containers.map((container, index) =>
+						(() => {
+							const singleMediaGallery =
+								container.components?.length === 1 &&
+								container.components[0]?.type === 'media_gallery' &&
+								(container.components[0]?.items?.length || 0) === 1;
+
+							return (
+								<div
+									key={index}
+									style={{
+										backgroundColor: '#2f3136',
+										borderLeft: container.color
+											? `4px solid ${container.color}`
+											: '4px solid #202225',
+										borderRadius: '4px',
+										padding: '12px',
+										marginBottom: '8px',
+										width: singleMediaGallery ? '75%' : '100%',
+										maxWidth: '100%',
+										filter: container.spoiler ? 'blur(8px)' : 'none',
+										cursor: container.spoiler ? 'pointer' : 'default',
+									}}
+								>
+									{renderContainerComponents(container)}
+								</div>
+							);
+						})(),
+					)}
 				</div>
 			</div>
 		</div>
@@ -189,27 +200,190 @@ function renderMediaGallery(gallery) {
 		);
 	}
 
-	return (
+	const items = gallery.items.slice(0, 10);
+	const gap = '8px';
+
+	const renderMediaImage = (item, index, options = {}) => {
+		const { crop = false, aspectRatio, extraStyle } = options;
+		return (
+			<img
+				key={index}
+				src={item.media?.url}
+				alt={item.description || 'media'}
+				style={{
+					width: '100%',
+					display: 'block',
+					borderRadius: '8px',
+					objectFit: crop ? 'cover' : 'contain',
+					aspectRatio: aspectRatio || undefined,
+					backgroundColor: '#202225',
+					filter: item.spoiler ? 'blur(8px)' : 'none',
+					cursor: item.spoiler ? 'pointer' : 'default',
+					...(extraStyle || {}),
+				}}
+				onError={(e) => (e.target.style.display = 'none')}
+			/>
+		);
+	};
+
+	const renderThreeColumnGrid = (gridItems, options = {}) => (
 		<div
 			style={{
 				display: 'grid',
-				gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-				gap: '8px',
+				gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+				gap,
 			}}
 		>
-			{gallery.items.map((item, index) => (
-				<img
-					key={index}
-					src={item.media?.url}
-					alt={item.description || 'media'}
-					style={{
-						width: '100%',
-						borderRadius: '8px',
-						objectFit: 'cover',
-					}}
-					onError={(e) => (e.target.style.display = 'none')}
-				/>
+			{gridItems.map((item, index) => (
+				<div key={index}>{renderMediaImage(item, index, options)}</div>
 			))}
+		</div>
+	);
+
+	if (items.length === 1) {
+		return (
+			<div style={{ width: '75%', maxWidth: '100%' }}>
+				{renderMediaImage(items[0], 0)}
+			</div>
+		);
+	}
+
+	if (items.length === 2) {
+		return (
+			<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+				{items.map((item, index) => (
+					<div key={index}>{renderMediaImage(item, index)}</div>
+				))}
+			</div>
+		);
+	}
+
+	if (items.length === 3) {
+		return (
+			<div
+				style={{
+					display: 'grid',
+					gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
+					gap,
+					alignItems: 'stretch',
+					aspectRatio: '16 / 9',
+					minHeight: '220px',
+				}}
+			>
+				<div style={{ minHeight: 0 }}>
+					{renderMediaImage(items[0], 0, {
+						crop: true,
+						extraStyle: {
+							height: '100%',
+							objectPosition: 'center',
+						},
+					})}
+				</div>
+				<div
+					style={{
+						display: 'grid',
+						gridTemplateRows: '1fr 1fr',
+						gap,
+						minHeight: 0,
+					}}
+				>
+					<div style={{ minHeight: 0 }}>
+						{renderMediaImage(items[1], 1, {
+							crop: true,
+							extraStyle: {
+								height: '100%',
+								objectPosition: 'center',
+							},
+						})}
+					</div>
+					<div style={{ minHeight: 0 }}>
+						{renderMediaImage(items[2], 2, {
+							crop: true,
+							extraStyle: {
+								height: '100%',
+								objectPosition: 'center',
+							},
+						})}
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	if (items.length === 4) {
+		return (
+			<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+				{items.map((item, index) => (
+					<div key={index}>
+						{renderMediaImage(item, index, {
+							crop: true,
+							aspectRatio: '2 / 1',
+						})}
+					</div>
+				))}
+			</div>
+		);
+	}
+
+	if (items.length === 5) {
+		return (
+			<div style={{ display: 'flex', flexDirection: 'column', gap }}>
+				<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+					<div>{renderMediaImage(items[0], 0)}</div>
+					<div>{renderMediaImage(items[1], 1)}</div>
+				</div>
+				<div
+					style={{
+						display: 'grid',
+						gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+						gap,
+					}}
+				>
+					{items.slice(2).map((item, index) => (
+						<div key={index}>{renderMediaImage(item, index + 2)}</div>
+					))}
+				</div>
+			</div>
+		);
+	}
+
+	if (items.length === 6) {
+		return renderThreeColumnGrid(items);
+	}
+
+	if (items.length === 7) {
+		return (
+			<div style={{ display: 'flex', flexDirection: 'column', gap }}>
+				<div style={{ width: '100%', maxWidth: '100%' }}>
+					{renderMediaImage(items[0], 0, { crop: true, aspectRatio: '2 / 1' })}
+				</div>
+				{renderThreeColumnGrid(items.slice(1, 7))}
+			</div>
+		);
+	}
+
+	if (items.length === 8) {
+		return (
+			<div style={{ display: 'flex', flexDirection: 'column', gap }}>
+				<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+					<div>{renderMediaImage(items[0], 0)}</div>
+					<div>{renderMediaImage(items[1], 1)}</div>
+				</div>
+				{renderThreeColumnGrid(items.slice(2, 8))}
+			</div>
+		);
+	}
+
+	if (items.length === 9) {
+		return renderThreeColumnGrid(items);
+	}
+
+	return (
+		<div style={{ display: 'flex', flexDirection: 'column', gap }}>
+			<div style={{ width: '100%', maxWidth: '100%' }}>
+				{renderMediaImage(items[0], 0, { crop: true, aspectRatio: '2 / 1' })}
+			</div>
+			{renderThreeColumnGrid(items.slice(1, 10))}
 		</div>
 	);
 }
