@@ -7,6 +7,10 @@ import { useState } from 'react';
 export default function ComponentV2({ v2Data, setV2Data }) {
 	const [draggedTextDisplay, setDraggedTextDisplay] = useState(null);
 	const [draggedOverTextDisplay, setDraggedOverTextDisplay] = useState(null);
+	const [draggedComponent, setDraggedComponent] = useState(null);
+	const [draggedOverComponent, setDraggedOverComponent] = useState(null);
+	const [draggedMediaItem, setDraggedMediaItem] = useState(null);
+	const [draggedOverMediaItem, setDraggedOverMediaItem] = useState(null);
 
 	const addContainer = () => {
 		setV2Data((prev) => ({
@@ -124,6 +128,19 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 		});
 	};
 
+	const reorderComponents = (containerIndex, fromIndex, toIndex) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const components = [...(container.components || [])];
+			const [movedComponent] = components.splice(fromIndex, 1);
+			components.splice(toIndex, 0, movedComponent);
+			container.components = components;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
 	// MediaGallery管理関数
 	const addMediaGalleryItem = (containerIndex, componentIndex) => {
 		setV2Data((prev) => {
@@ -196,6 +213,26 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 			component.items = (component.items || []).filter(
 				(_, i) => i !== itemIndex,
 			);
+			container.components[componentIndex] = component;
+			newContainers[containerIndex] = container;
+			return { ...prev, containers: newContainers };
+		});
+	};
+
+	const reorderMediaGalleryItems = (
+		containerIndex,
+		componentIndex,
+		fromIndex,
+		toIndex,
+	) => {
+		setV2Data((prev) => {
+			const newContainers = [...prev.containers];
+			const container = { ...newContainers[containerIndex] };
+			const component = { ...container.components[componentIndex] };
+			const items = [...(component.items || [])];
+			const [movedItem] = items.splice(fromIndex, 1);
+			items.splice(toIndex, 0, movedItem);
+			component.items = items;
 			container.components[componentIndex] = component;
 			newContainers[containerIndex] = container;
 			return { ...prev, containers: newContainers };
@@ -410,9 +447,73 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 			<div
 				key={componentIndex}
 				className="ba b--black-10 pa2 mb2 br2 bg-black-05"
+				draggable
+				onDragStart={(e) => {
+					setDraggedComponent({ containerIndex, componentIndex });
+					e.dataTransfer.effectAllowed = 'move';
+				}}
+				onDragOver={(e) => {
+					e.preventDefault();
+					e.dataTransfer.dropEffect = 'move';
+					setDraggedOverComponent({ containerIndex, componentIndex });
+				}}
+				onDragLeave={(e) => {
+					e.preventDefault();
+					setDraggedOverComponent(null);
+				}}
+				onDrop={(e) => {
+					e.preventDefault();
+					setDraggedOverComponent(null);
+					if (
+						draggedComponent &&
+						draggedComponent.containerIndex === containerIndex &&
+						draggedComponent.componentIndex !== componentIndex
+					) {
+						reorderComponents(
+							containerIndex,
+							draggedComponent.componentIndex,
+							componentIndex,
+						);
+					}
+				}}
+				onDragEnd={() => {
+					setDraggedComponent(null);
+					setDraggedOverComponent(null);
+				}}
+				style={{
+					cursor: 'move',
+					opacity:
+						draggedComponent?.containerIndex === containerIndex &&
+						draggedComponent?.componentIndex === componentIndex
+							? 0.5
+							: 1,
+					borderTop:
+						draggedOverComponent?.containerIndex === containerIndex &&
+						draggedOverComponent?.componentIndex === componentIndex &&
+						draggedComponent &&
+						draggedComponent.componentIndex > componentIndex
+							? '3px solid #357edd'
+							: undefined,
+					borderBottom:
+						draggedOverComponent?.containerIndex === containerIndex &&
+						draggedOverComponent?.componentIndex === componentIndex &&
+						draggedComponent &&
+						draggedComponent.componentIndex < componentIndex
+							? '3px solid #357edd'
+							: undefined,
+				}}
 			>
 				<div className="flex items-center justify-between mb2">
 					<span className="white-80 f6">
+						<span
+							style={{
+								display: 'inline-block',
+								marginRight: '8px',
+								cursor: 'grab',
+							}}
+						>
+							⋮⋮
+						</span>
 						{typeNames[component.type] || 'Unknown'}
 					</span>
 					<button
@@ -429,9 +530,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 						{/* Components (TextDisplays) */}
 						<div className="mb2">
 							<div className="flex items-center justify-between mb1">
-								<label className="db fw6 white f6">
-									文字列
-								</label>
+								<label className="db fw6 white f6">文字列</label>
 								<button
 									className="button-reset bg-blue white pa1 br2 pointer bn f7"
 									onClick={() => addTextDisplay(containerIndex, componentIndex)}
@@ -445,6 +544,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 									className="ba b--black-10 pa2 mb2 br2"
 									draggable
 									onDragStart={(e) => {
+										e.stopPropagation();
 										setDraggedTextDisplay({
 											containerIndex,
 											componentIndex,
@@ -454,6 +554,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 									}}
 									onDragOver={(e) => {
 										e.preventDefault();
+										e.stopPropagation();
 										e.dataTransfer.dropEffect = 'move';
 										setDraggedOverTextDisplay({
 											containerIndex,
@@ -463,10 +564,12 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 									}}
 									onDragLeave={(e) => {
 										e.preventDefault();
+										e.stopPropagation();
 										setDraggedOverTextDisplay(null);
 									}}
 									onDrop={(e) => {
 										e.preventDefault();
+										e.stopPropagation();
 										setDraggedOverTextDisplay(null);
 										if (
 											draggedTextDisplay &&
@@ -577,7 +680,11 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 										<button
 											className="button-reset bg-blue white pa1 br2 pointer bn f7"
 											onClick={() =>
-												addAccessory(containerIndex, componentIndex, 'thumbnail')
+												addAccessory(
+													containerIndex,
+													componentIndex,
+													'thumbnail',
+												)
 											}
 										>
 											+ 画像を追加
@@ -585,9 +692,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 									</div>
 								)}
 							</div>
-							{!component.accessory ? (
-								null
-							) : (
+							{!component.accessory ? null : (
 								<div className="ba b--black-10 pa2 br2">
 									<div className="flex items-center justify-between mb2">
 										<span className="white-80 f6">
@@ -737,7 +842,82 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 
 						{component.items && component.items.length > 0 ? (
 							component.items.map((item, itemIndex) => (
-								<div key={itemIndex} className="ba b--black-10 pa2 mb2 br2">
+								<div
+									key={itemIndex}
+									className="ba b--black-10 pa2 mb2 br2"
+									draggable
+									onDragStart={(e) => {
+										e.stopPropagation();
+										setDraggedMediaItem({
+											containerIndex,
+											componentIndex,
+											itemIndex,
+										});
+										e.dataTransfer.effectAllowed = 'move';
+									}}
+									onDragOver={(e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										e.dataTransfer.dropEffect = 'move';
+										setDraggedOverMediaItem({
+											containerIndex,
+											componentIndex,
+											itemIndex,
+										});
+									}}
+									onDragLeave={(e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										setDraggedOverMediaItem(null);
+									}}
+									onDrop={(e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										setDraggedOverMediaItem(null);
+										if (
+											draggedMediaItem &&
+											draggedMediaItem.containerIndex === containerIndex &&
+											draggedMediaItem.componentIndex === componentIndex &&
+											draggedMediaItem.itemIndex !== itemIndex
+										) {
+											reorderMediaGalleryItems(
+												containerIndex,
+												componentIndex,
+												draggedMediaItem.itemIndex,
+												itemIndex,
+											);
+										}
+									}}
+									onDragEnd={() => {
+										setDraggedMediaItem(null);
+										setDraggedOverMediaItem(null);
+									}}
+									style={{
+										cursor: 'move',
+										opacity:
+											draggedMediaItem?.containerIndex === containerIndex &&
+											draggedMediaItem?.componentIndex === componentIndex &&
+											draggedMediaItem?.itemIndex === itemIndex
+												? 0.5
+												: 1,
+										borderTop:
+											draggedOverMediaItem?.containerIndex === containerIndex &&
+											draggedOverMediaItem?.componentIndex === componentIndex &&
+											draggedOverMediaItem?.itemIndex === itemIndex &&
+											draggedMediaItem &&
+											draggedMediaItem.itemIndex > itemIndex
+												? '3px solid #357edd'
+												: undefined,
+										borderBottom:
+											draggedOverMediaItem?.containerIndex === containerIndex &&
+											draggedOverMediaItem?.componentIndex === componentIndex &&
+											draggedOverMediaItem?.itemIndex === itemIndex &&
+											draggedMediaItem &&
+											draggedMediaItem.itemIndex < itemIndex
+												? '3px solid #357edd'
+												: undefined,
+									}}
+								>
 									<div className="flex items-center justify-between mb2">
 										<span className="white-80 f7">Media {itemIndex + 1}</span>
 										<button
