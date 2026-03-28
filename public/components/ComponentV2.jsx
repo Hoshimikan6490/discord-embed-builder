@@ -1,84 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 
 /**
  * Component v2 - Advanced Builder with Components (IS_COMPONENTS_V2=true)
  * Provides an advanced interface for creating Discord message components v2
  */
 export default function ComponentV2({ v2Data, setV2Data }) {
-	const [jsonText, setJsonText] = useState('');
-	const [jsonError, setJsonError] = useState('');
-	const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
 	const [draggedTextDisplay, setDraggedTextDisplay] = useState(null);
 	const [draggedOverTextDisplay, setDraggedOverTextDisplay] = useState(null);
-	const jsonTextareaRef = useRef(null);
-	const jsonLineNumbersRef = useRef(null);
-
-	// Update jsonText when v2Data changes
-	useEffect(() => {
-		setJsonText(JSON.stringify(v2Data, null, 2));
-	}, [v2Data]);
-
-	const lineCount = Math.max(1, jsonText.split('\n').length);
-
-	const updateCursorPosition = (text, cursorIndex) => {
-		const beforeCursor = text.slice(0, cursorIndex);
-		const parts = beforeCursor.split('\n');
-		setCursorPosition({
-			line: parts.length,
-			column: parts[parts.length - 1].length + 1,
-		});
-	};
-
-	const handleJsonChange = (e) => {
-		const value = e.target.value;
-		setJsonText(value);
-		updateCursorPosition(value, e.target.selectionStart || 0);
-		try {
-			const parsed = JSON.parse(value);
-			setV2Data(parsed);
-			setJsonError('');
-		} catch (err) {
-			setJsonError(err.message);
-		}
-	};
-
-	const handleJsonKeyDown = (e) => {
-		if (e.key !== 'Tab') return;
-		e.preventDefault();
-
-		const target = e.target;
-		const start = target.selectionStart;
-		const end = target.selectionEnd;
-		const nextValue = `${jsonText.slice(0, start)}  ${jsonText.slice(end)}`;
-
-		setJsonText(nextValue);
-		setTimeout(() => {
-			if (jsonTextareaRef.current) {
-				jsonTextareaRef.current.selectionStart = start + 2;
-				jsonTextareaRef.current.selectionEnd = start + 2;
-			}
-		}, 0);
-
-		updateCursorPosition(nextValue, start + 2);
-
-		try {
-			const parsed = JSON.parse(nextValue);
-			setV2Data(parsed);
-			setJsonError('');
-		} catch (err) {
-			setJsonError(err.message);
-		}
-	};
-
-	const handleJsonScroll = (e) => {
-		if (jsonLineNumbersRef.current) {
-			jsonLineNumbersRef.current.scrollTop = e.target.scrollTop;
-		}
-	};
-
-	const handleJsonCursorMove = (e) => {
-		updateCursorPosition(e.target.value, e.target.selectionStart || 0);
-	};
 
 	const addContainer = () => {
 		setV2Data((prev) => ({
@@ -693,7 +621,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 						className="button-reset bg-blue white pa2 br2 pointer bn"
 						onClick={addContainer}
 					>
-						+ containerを追加する
+						+ containerを追加
 					</button>
 				</div>
 
@@ -788,7 +716,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 											addComponentToContainer(containerIndex, 'section')
 										}
 									>
-										+ SectionComponents
+										+ セクションを追加
 									</button>
 									<button
 										className="button-reset bg-blue white pa2 br2 pointer bn f6"
@@ -796,7 +724,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 											addComponentToContainer(containerIndex, 'media_gallery')
 										}
 									>
-										+ MediaGalleryComponents
+										+ 画像ギャラリーを追加
 									</button>
 									<button
 										className="button-reset bg-blue white pa2 br2 pointer bn f6"
@@ -804,7 +732,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 											addComponentToContainer(containerIndex, 'separator')
 										}
 									>
-										+ SeparatorComponents
+										+ 仕切り線を追加
 									</button>
 									<button
 										className="button-reset bg-blue white pa2 br2 pointer bn f6"
@@ -812,7 +740,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 											addComponentToContainer(containerIndex, 'text_display')
 										}
 									>
-										+ TextDisplayComponents
+										+ 文字列を追加
 									</button>
 									<button
 										className="button-reset bg-blue white pa2 br2 pointer bn f6"
@@ -820,7 +748,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 											addComponentToContainer(containerIndex, 'file')
 										}
 									>
-										+ FileComponents
+										+ ファイルを追加
 									</button>
 									<button
 										className="button-reset bg-blue white pa2 br2 pointer bn f6"
@@ -828,7 +756,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 											addComponentToContainer(containerIndex, 'action_row')
 										}
 									>
-										+ ActionRowComponents
+										+ ボタンやセレクトメニューを追加
 									</button>
 								</div>
 							</div>
@@ -851,51 +779,7 @@ export default function ComponentV2({ v2Data, setV2Data }) {
 					))
 				) : (
 					<div className="white-60 tc pa4">
-						「+ containerを追加する」ボタンをクリックして開始
-					</div>
-				)}
-			</div>
-			<div className="pa3" style={{ flex: '1', overflowY: 'auto' }}>
-				<div className="flex items-center justify-between mb2">
-					<h3 className="fw6 white">JSONエディター</h3>
-					<div className="white-60 f7">
-						Ln {cursorPosition.line}, Col {cursorPosition.column}
-					</div>
-				</div>
-				<div
-					className="json-editor-shell ba b--black-20 br2 overflow-hidden"
-					style={{ height: 'calc(100% - 60px)' }}
-				>
-					<div
-						ref={jsonLineNumbersRef}
-						className="json-editor-gutter"
-						aria-hidden="true"
-					>
-						{Array.from({ length: lineCount }, (_, i) => (
-							<div key={i + 1} className="json-editor-line-number">
-								{i + 1}
-							</div>
-						))}
-					</div>
-					<textarea
-						ref={jsonTextareaRef}
-						className="json-editor-textarea"
-						value={jsonText}
-						onChange={handleJsonChange}
-						onKeyDown={handleJsonKeyDown}
-						onScroll={handleJsonScroll}
-						onClick={handleJsonCursorMove}
-						onKeyUp={handleJsonCursorMove}
-						onSelect={handleJsonCursorMove}
-						spellCheck={false}
-					/>
-				</div>
-				{jsonError && (
-					<div
-						className="bg-red pa2 mt2 br2 white b"
-						style={{ fontSize: '12px' }}
-					>
-						エラー：{jsonError}
+						「+ containerを追加」ボタンをクリックして開始
 					</div>
 				)}
 			</div>

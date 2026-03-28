@@ -356,10 +356,81 @@ function renderAccessory(accessory) {
  * Discord Embed Preview Component
  * Displays a preview of the Discord embed or v2 components
  */
-export default function EmbedPreview({ embedData, v2Data }) {
-	// v2データがある場合はv2プレビューを表示
-	if (v2Data && v2Data.containers && v2Data.containers.length > 0) {
-		return renderV2Preview(v2Data);
+export default function EmbedPreview({ embedData, v2Data, mode = 'v1' }) {
+	const hasV2Containers = Boolean(
+		v2Data && v2Data.containers && v2Data.containers.length > 0,
+	);
+
+	if (mode === 'v2') {
+		if (hasV2Containers) {
+			return renderV2Preview(v2Data);
+		}
+
+		return (
+			<div
+				className="pa3 bg-dark-gray"
+				style={{ backgroundColor: '#36393f', minHeight: '300px' }}
+			>
+				<div className="flex items-start" style={{ maxWidth: '576px' }}>
+					<img
+						src="./assets/images/discord_logo.png"
+						alt="Bot Avatar"
+						style={{
+							width: '40px',
+							height: '40px',
+							borderRadius: '50%',
+							marginRight: '16px',
+							backgroundColor: '#5865f2',
+							padding: '8px',
+							flexShrink: 0,
+						}}
+						onError={(e) => {
+							e.target.src = './assets/images/discord_logo.svg';
+							e.target.onerror = null;
+						}}
+					/>
+					<div style={{ flex: 1, minWidth: 0 }}>
+						<div className="flex items-center" style={{ marginBottom: '2px' }}>
+							<span
+								style={{
+									color: '#ffffff',
+									fontWeight: 500,
+									fontSize: '16px',
+									marginRight: '6px',
+								}}
+							>
+								Discord Bot
+							</span>
+							<span
+								style={{
+									backgroundColor: '#5865f2',
+									color: '#ffffff',
+									fontSize: '10px',
+									fontWeight: 500,
+									padding: '2px 4px',
+									borderRadius: '3px',
+									textTransform: 'uppercase',
+								}}
+							>
+								BOT
+							</span>
+							<span
+								style={{
+									color: '#a3a6aa',
+									fontSize: '12px',
+									marginLeft: '6px',
+								}}
+							>
+								{moment().format('LT')}
+							</span>
+						</div>
+						<div style={{ color: '#72767d', fontSize: '14px' }}>
+							コンポーネントがありません
+						</div>
+					</div>
+				</div>
+			</div>
+		);
 	}
 
 	const borderColor = embedData.color

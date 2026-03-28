@@ -26,10 +26,11 @@ export default function App() {
 	const jsonTextareaRef = useRef(null);
 	const jsonLineNumbersRef = useRef(null);
 
-	// Update jsonText when embedData changes
+	// Update jsonText when active tab data changes
 	useEffect(() => {
-		setJsonText(JSON.stringify(embedData, null, 2));
-	}, [embedData]);
+		const activeData = activeTab === 'v1' ? embedData : v2Data;
+		setJsonText(JSON.stringify(activeData, null, 2));
+	}, [activeTab, embedData, v2Data]);
 
 	const lineCount = Math.max(1, jsonText.split('\n').length);
 
@@ -48,7 +49,11 @@ export default function App() {
 		updateCursorPosition(value, e.target.selectionStart || 0);
 		try {
 			const parsed = JSON.parse(value);
-			setEmbedData(parsed);
+			if (activeTab === 'v1') {
+				setEmbedData(parsed);
+			} else {
+				setV2Data(parsed);
+			}
 			setJsonError('');
 		} catch (err) {
 			setJsonError(err.message);
@@ -76,7 +81,11 @@ export default function App() {
 
 		try {
 			const parsed = JSON.parse(nextValue);
-			setEmbedData(parsed);
+			if (activeTab === 'v1') {
+				setEmbedData(parsed);
+			} else {
+				setV2Data(parsed);
+			}
 			setJsonError('');
 		} catch (err) {
 			setJsonError(err.message);
@@ -255,7 +264,7 @@ export default function App() {
 							<ComponentV2 v2Data={v2Data} setV2Data={setV2Data} />
 						</div>
 						<div className="w-100 w-50-l">
-							<EmbedPreview embedData={embedData} v2Data={v2Data} />
+							<EmbedPreview embedData={embedData} v2Data={v2Data} mode="v2" />
 							<div
 								className="pa3 flex gap2"
 								style={{ backgroundColor: '#36393f' }}
@@ -272,6 +281,50 @@ export default function App() {
 								>
 									💾 JSONエクスポート
 								</button>
+							</div>
+							<div className="pa3" style={{ backgroundColor: '#36393f' }}>
+								<div className="flex items-center justify-between mb2">
+									<h3 className="fw6 white">JSONエディター</h3>
+									<div className="white-60 f7">
+										Ln {cursorPosition.line}, Col {cursorPosition.column}
+									</div>
+								</div>
+								<div
+									className="json-editor-shell ba b--black-20 br2 overflow-hidden"
+									style={{ height: '400px' }}
+								>
+									<div
+										ref={jsonLineNumbersRef}
+										className="json-editor-gutter"
+										aria-hidden="true"
+									>
+										{Array.from({ length: lineCount }, (_, i) => (
+											<div key={i + 1} className="json-editor-line-number">
+												{i + 1}
+											</div>
+										))}
+									</div>
+									<textarea
+										ref={jsonTextareaRef}
+										className="json-editor-textarea"
+										value={jsonText}
+										onChange={handleJsonChange}
+										onKeyDown={handleJsonKeyDown}
+										onScroll={handleJsonScroll}
+										onClick={handleJsonCursorMove}
+										onKeyUp={handleJsonCursorMove}
+										onSelect={handleJsonCursorMove}
+										spellCheck={false}
+									/>
+								</div>
+								{jsonError && (
+									<div
+										className="bg-red pa2 mt2 br2 white b"
+										style={{ fontSize: '12px' }}
+									>
+										エラー：{jsonError}
+									</div>
+								)}
 							</div>
 						</div>
 					</>
