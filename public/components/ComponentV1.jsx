@@ -1,83 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-
 /**
  * Component v1 - Form-based editor
  * Provides a comprehensive form interface for editing Discord embeds
  */
 export default function ComponentV1({ embedData, setEmbedData }) {
-	const [jsonText, setJsonText] = useState('');
-	const [jsonError, setJsonError] = useState('');
-	const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
-	const jsonTextareaRef = useRef(null);
-	const jsonLineNumbersRef = useRef(null);
-
-	useEffect(() => {
-		setJsonText(JSON.stringify(embedData, null, 2));
-	}, [embedData]);
-
-	const lineCount = Math.max(1, jsonText.split('\n').length);
-
-	const updateCursorPosition = (text, cursorIndex) => {
-		const beforeCursor = text.slice(0, cursorIndex);
-		const parts = beforeCursor.split('\n');
-		setCursorPosition({
-			line: parts.length,
-			column: parts[parts.length - 1].length + 1,
-		});
-	};
-
-	const handleJsonChange = (e) => {
-		const value = e.target.value;
-		setJsonText(value);
-		updateCursorPosition(value, e.target.selectionStart || 0);
-
-		try {
-			const parsed = JSON.parse(value);
-			setEmbedData(parsed);
-			setJsonError('');
-		} catch (err) {
-			setJsonError(err.message);
-		}
-	};
-
-	const handleJsonKeyDown = (e) => {
-		if (e.key !== 'Tab') return;
-		e.preventDefault();
-
-		const target = e.target;
-		const start = target.selectionStart;
-		const end = target.selectionEnd;
-		const nextValue = `${jsonText.slice(0, start)}  ${jsonText.slice(end)}`;
-
-		setJsonText(nextValue);
-		setTimeout(() => {
-			if (jsonTextareaRef.current) {
-				jsonTextareaRef.current.selectionStart = start + 2;
-				jsonTextareaRef.current.selectionEnd = start + 2;
-			}
-		}, 0);
-
-		updateCursorPosition(nextValue, start + 2);
-
-		try {
-			const parsed = JSON.parse(nextValue);
-			setEmbedData(parsed);
-			setJsonError('');
-		} catch (err) {
-			setJsonError(err.message);
-		}
-	};
-
-	const handleJsonScroll = (e) => {
-		if (jsonLineNumbersRef.current) {
-			jsonLineNumbersRef.current.scrollTop = e.target.scrollTop;
-		}
-	};
-
-	const handleJsonCursorMove = (e) => {
-		updateCursorPosition(e.target.value, e.target.selectionStart || 0);
-	};
-
 	const handleChange = (field, value) => {
 		setEmbedData((prev) => ({
 			...prev,
@@ -528,49 +453,6 @@ export default function ComponentV1({ embedData, setEmbedData }) {
 						</div>
 					</div>
 				))}
-			</div>
-
-			<div className="mb3">
-				<div className="flex items-center justify-between mb2">
-					<h3 className="fw6 white">JSONエディター</h3>
-					<div className="white-60 f7">
-						Ln {cursorPosition.line}, Col {cursorPosition.column}
-					</div>
-				</div>
-				<div className="json-editor-shell ba b--black-20 br2 overflow-hidden">
-					<div
-						ref={jsonLineNumbersRef}
-						className="json-editor-gutter"
-						aria-hidden="true"
-					>
-						{Array.from({ length: lineCount }, (_, i) => (
-							<div key={i + 1} className="json-editor-line-number">
-								{i + 1}
-							</div>
-						))}
-					</div>
-					<textarea
-						ref={jsonTextareaRef}
-						className="json-editor-textarea"
-						value={jsonText}
-						onChange={handleJsonChange}
-						onKeyDown={handleJsonKeyDown}
-						onScroll={handleJsonScroll}
-						onClick={handleJsonCursorMove}
-						onKeyUp={handleJsonCursorMove}
-						onSelect={handleJsonCursorMove}
-						spellCheck={false}
-						rows={12}
-					/>
-				</div>
-				{jsonError && (
-					<div
-						className="bg-red pa2 mt2 br2 white b"
-						style={{ fontSize: '12px' }}
-					>
-						エラー：{jsonError}
-					</div>
-				)}
 			</div>
 		</div>
 	);
